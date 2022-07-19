@@ -11,37 +11,27 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-/* ----------------------------------------------------------------------
-   Contributing authors: Stephen Foiles (SNL), Murray Daw (SNL)
-------------------------------------------------------------------------- */
-#include "math.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+// clang-format on
+
 #include "pair_aeam.h"
+
 #include "atom.h"
-#include "neighbor.h"
-#include "neigh_request.h"
-#include "force.h"
 #include "comm.h"
+#include "error.h"
+#include "force.h"
 #include "memory.h"
 #include "neigh_list.h"
-#include "error.h"
+#include "neigh_request.h"
+#include "neighbor.h"
 
-#include <iostream>
-#include <iomanip>
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
 
 using namespace LAMMPS_NS;
 
 #define MAXLINE 1024
 #define DELTA 4
-
-/* already defined in pointers.h
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-*/
-
-using namespace std;
 
 /* ---------------------------------------------------------------------- */
 
@@ -277,7 +267,7 @@ void PairAEAM::compute(int eflag, int vflag)
 	
 	// communicate and sum densities
 	
-	if (newton_pair) comm->reverse_comm_pair(this);
+	if (newton_pair) comm->reverse_comm(this);
 	
 	double ni, deli, ci, Fptmp;
 	
@@ -328,9 +318,7 @@ void PairAEAM::compute(int eflag, int vflag)
 		
 	// communicate derivative of embedding function
 	
-	comm->forward_comm_pair(this);
-
-	
+	comm->forward_comm(this);
 	
 	for (ii = 0; ii < inum; ii++) {
 		i = ilist[ii];
@@ -656,7 +644,7 @@ void PairAEAM::coeff(int narg, char **arg)
 		for (j = i; j <= n; j++) {
 			if (map[i] >= 0 && map[j] >= 0) {
 				setflag[i][j] = 1;
-				if (i == j) atom->set_mass(i,setfl->mass[map[i]]);
+				if (i == j) atom->set_mass(FLERR,i,setfl->mass[map[i]]);
 				count++;
 			}
 		}
@@ -671,14 +659,10 @@ void PairAEAM::coeff(int narg, char **arg)
 
 void PairAEAM::init_style()
 {
-
-
   file2array();
   array2spline();
 
-	int irequest = neighbor->request(this);
-	neighbor->requests[irequest]->half = 0;
-	neighbor->requests[irequest]->full = 1;
+  neighbor->add_request(this, NeighConst::REQ_FULL);
 }
 
 
@@ -688,11 +672,7 @@ void PairAEAM::init_style()
 
 double PairAEAM::init_one(int i, int j)
 {
-
-
-if (setflag[i][j] == 0) error->all(FLERR,"All pair coeffs are not set");
-	
-	
+    if (setflag[i][j] == 0) error->all(FLERR,"All pair coeffs are not set");
   cutmax = setfl->cut[i-1][j-1];
   cutforcesq = cutmax*cutmax;
   return cutmax;
@@ -734,7 +714,7 @@ void PairAEAM::read_file(char *filename)
     MPI_Bcast(line,n,MPI_CHAR,0,world);
 	
     sscanf(line,"%d %d %d",&file->nelements, &file->nnonangular, &file->nangular);
-    int nwords = atom->count_words(line);
+    int nwords = utils::count_words(line);
     if (nwords != file->nelements + 3 ||  file->nelements!= file->nnonangular+ file->nangular)
         error->all(FLERR,"Incorrect element names in AEAM potential file");
 
