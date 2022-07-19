@@ -21,7 +21,7 @@ include(LAMMPSInterfacePlugin)
 ##########################
 # building the plugins
 
-add_library(aeamplugin MODULE aeamplugin.cpp ${CMAKE_SOURCE_DIR}/pair_aeam.cpp)
+add_library(aeamplugin MODULE aeamplugin.cpp ${CMAKE_CURRENT_SOURCE_DIR}/pair_aeam.cpp)
 target_link_libraries(aeamplugin PRIVATE lammps)
 set_target_properties(aeamplugin PROPERTIES PREFIX "" SUFFIX ".so")
 
@@ -38,8 +38,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   get_lammps_version(${LAMMPS_SOURCE_DIR}/version.h LAMMPS_VERSION)
   find_program(MAKENSIS_PATH makensis)
   if(MAKENSIS_PATH)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/../lammps.ico
-      ${CMAKE_SOURCE_DIR}/../lammps-text-logo-wide.bmp ${CMAKE_SOURCE_DIR}/aeamplugin.nsis ${CMAKE_BINARY_DIR})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../lammps.ico
+      ${CMAKE_CURRENT_SOURCE_DIR}/../lammps-text-logo-wide.bmp ${CMAKE_CURRENT_SOURCE_DIR}/aeamplugin.nsis ${CMAKE_BINARY_DIR})
     if(BUILD_MPI)
       add_custom_target(package ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI aeamplugin.nsis
         DEPENDS aeamplugin
