@@ -159,21 +159,24 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
     // Parse the number of MD timesteps to do between MC.
     iarg++;
     nevery_mdsteps = atoi(arg[iarg]);
-    printLog("  SGC - Number of MD timesteps: %d\n", nevery_mdsteps);
+    if (comm->me == 0)
+      utils::logmesg(lmp, "  SGC - Number of MD timesteps: {}\n", nevery_mdsteps);
     if(nevery_mdsteps <= 0)
         error->all(FLERR, "Illegal fix sgcmc command. Invalid number of MD timesteps.");
 
     // Parse the fraction of atoms swaps attempted during each cycle.
     iarg++;
     swap_fraction = atof(arg[iarg]);
-    printLog("  SGC - Fraction of swap atoms: %f\n", swap_fraction);
+    if (comm->me == 0)
+      utils::logmesg(lmp, "  SGC - Fraction of swap atoms: {}\n", swap_fraction);
     if(swap_fraction < 0 || swap_fraction > 1.0)
         error->all(FLERR, "Illegal fix sgcmc command. Invalid fraction of swap atoms.");
 
     // Parse temperature for MC.
     iarg++;
     double temperature = atof(arg[iarg]);
-    printLog("  SGC - Temperature: %f\n", temperature);
+    if (comm->me == 0)
+      utils::logmesg(lmp, "  SGC - Temperature: %f\n", temperature);
     if(temperature <= 0)
         error->all(FLERR, "Illegal fix sgcmc command. Temperature invalid.");
     double kb = 8.617343e-5;
@@ -190,7 +193,8 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
         if(iarg >= narg)
             error->all(FLERR, "Illegal fix sgcmc command. Too few chemical potentials specified.");
         deltamu[i] = atof(arg[iarg]);
-        printLog("  SGC - Chemical potential of species %i: %f\n", i, deltamu[i]);
+        if (comm->me == 0)
+          utils::logmesg(lmp, "  SGC - Chemical potential of species {}: {}\n", i, deltamu[i]);
     }
 
     // Default values for optional parameters (where applicable).
@@ -204,7 +208,8 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
             // Random number seed.
             if(iarg + 2 > narg) error->all(FLERR, "Illegal fix sgcmc command. Missing parameter after keyword 'randseed'.");
             seed = atoi(arg[iarg+1]);
-            printLog("  SGC - Random number seed: %i\n", seed);
+            if (comm->me == 0)
+              utils::logmesg(lmp, "  SGC - Random number seed: {}\n", seed);
             if(seed <= 0)
               error->all(FLERR, "Illegal fix sgcmc command. Random number seed must be positive.");
             iarg += 2;
@@ -214,7 +219,8 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
             // Parse number of window moves.
             if(iarg + 2 > narg) error->all(FLERR, "Illegal fix sgcmc command. Missing parameter after keyword 'window_moves'.");
             numSamplingWindowMoves = atoi(arg[iarg+1]);
-            printLog("  SGC - Number of sampling window moves: %d\n", numSamplingWindowMoves);
+            if (comm->me == 0)
+              utils::logmesg(lmp, "  SGC - Number of sampling window moves: {}\n", numSamplingWindowMoves);
             if(numSamplingWindowMoves <= 0)
               error->all(FLERR, "Illegal fix sgcmc command. Invalid number of sampling window moves.");
             iarg += 2;
@@ -224,7 +230,8 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
             // Parse sampling window size parameter.
             if(iarg + 2 > narg) error->all(FLERR, "Missing parameter after keyword 'window_size'.");
             samplingWindowUserSize = atof(arg[iarg+1]);
-            printLog("  SGC - Sampling window size: %f\n", samplingWindowUserSize);
+            if (comm->me == 0)
+              utils::logmesg(lmp, "  SGC - Sampling window size: {}\n", samplingWindowUserSize);
             if(samplingWindowUserSize < 0.5 || samplingWindowUserSize > 1.0)
                 error->all(FLERR, "Illegal fix sgcmc command. Sampling window size is out of range.");
             iarg += 2;
@@ -236,7 +243,7 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
             iarg++;
 
             kappa = atof(arg[iarg]);
-            printLog("  SGC - Kappa: %f\n", kappa);
+            if (comm->me == 0) utils::logmesg(lmp, "  SGC - Kappa: {}\n", kappa);
             if(kappa < 0)
               error->all(FLERR, "Illegal fix sgcmc command. Variance constraint parameter must not be negative.");
             iarg++;
@@ -247,18 +254,21 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
             for(int i=2; i<=atom->ntypes; i++, iarg++) {
                 targetConcentration[i] = atof(arg[iarg]);
                 targetConcentration[1] -= targetConcentration[i];
-                printLog("  SGC - Target concentration of species %i: %f\n", i, targetConcentration[i]);
+                if (comm->me == 0)
+                        utils::logmesg(lmp, "  SGC - Target concentration of species {}: {}\n", i, targetConcentration[i]);
                 if(targetConcentration[i] < 0 || targetConcentration[i] > 1.0)
                     error->all(FLERR, "Illegal fix sgcmc command. Target concentration is out of range.");
             }
-            printLog("  SGC - Target concentration of species 1: %f\n", targetConcentration[1]);
+            if (comm->me == 0)
+              utils::logmesg(lmp, "  SGC - Target concentration of species 1: {}\n", targetConcentration[1]);
             if(targetConcentration[1] < 0)
                 error->all(FLERR, "Illegal fix sgcmc command. Target concentration is out of range.");
         }
         else if(strcmp(arg[iarg], "serial") == 0) {
             // Switch off second rejection.
             serialMode = true;
-            printLog("  SGC - Using serial MC version without second rejection.\n");
+            if (comm->me == 0)
+              utils::logmesg(lmp, "  SGC - Using serial MC version without second rejection.\n");
             iarg++;
 
             if(comm->nprocs != 1)
@@ -372,7 +382,8 @@ void FixSemiGrandCanonicalMC::init()
     else if((pairTersoff = dynamic_cast<PairTersoff*>(force->pair))) {}
 #endif
     else {
-        printLog("  SGC - Using naive total energy calculation for MC -> SLOW!\n");
+        if (comm->me == 0)
+          utils::logmesg(lmp, "  SGC - Using naive total energy calculation for MC -> SLOW!\n");
 
         // Create a compute that will provide the total energy of the system.
         // This is needed by computeTotalEnergy().
@@ -381,7 +392,7 @@ void FixSemiGrandCanonicalMC::init()
         compute_pe = modify->compute[ipe];
     }
     interactionRadius = force->pair->cutforce;
-    printLog("  SGC - Interaction radius: %f\n", interactionRadius);
+    if (comm->me == 0) utils::logmesg(lmp, "  SGC - Interaction radius: {}\n", interactionRadius);
 
     // This fix needs a full neighbor list.
     neighbor->add_request(this, NeighConst::REQ_FULL);
@@ -424,10 +435,6 @@ void FixSemiGrandCanonicalMC::post_force(int /*vflag*/)
  *********************************************************************/
 void FixSemiGrandCanonicalMC::doMC()
 {
-#if 0   // Want to indicate MC steps in the logfile?
-    printLog("Performing MC step at timestep %i\n", update->ntimestep);
-#endif
-
     /// Reset energy variable to signal the energy calculation routine that
     /// it need to recompute the current total energy.
     totalPotentialEnergy = 0;
@@ -1911,24 +1918,5 @@ double FixSemiGrandCanonicalMC::memory_usage()
 {
     return (changedAtoms.size() * sizeof(bool)) +
         (samplingWindowAtoms.size() * sizeof(int));
-}
-
-/*********************************************************************
- * Sends the given formated string to the log file and stdout.
- *********************************************************************/
-void FixSemiGrandCanonicalMC::printLog(const char* format, ...)
-{
-    if(comm->me == 0 && screen) {
-        va_list ap;
-        va_start(ap,format);
-        vfprintf(screen, format, ap);
-        va_end(ap);
-    }
-    if(comm->me == 0 && logfile) {
-        va_list ap;
-        va_start(ap,format);
-        vfprintf(logfile, format, ap);
-        va_end(ap);
-    }
 }
 
