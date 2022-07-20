@@ -70,7 +70,6 @@ PairAEAM::~PairAEAM()
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
-    delete[] map;
     delete[] type2frho;
     memory->destroy(type2rhor);
     memory->destroy(type2z2r);
@@ -79,7 +78,11 @@ PairAEAM::~PairAEAM()
   if (setfl) {
     for (int i = 0; i < setfl->nelements; i++) delete[] setfl->elements[i];
     delete[] setfl->elements;
+    delete[] setfl->nonangular;
+    delete[] setfl->angular;
     delete[] setfl->mass;
+    delete[] setfl->nrho;
+    delete[] setfl->drho;
     memory->destroy(setfl->frho);
     memory->destroy(setfl->rhor);
     memory->destroy(setfl->z2r);
@@ -493,6 +496,7 @@ void PairAEAM::allocate()
 
   memory->create(cutsq, n + 1, n + 1, "pair:cutsq");
 
+  delete[] map;
   map = new int[n + 1];
   for (int i = 1; i <= n; i++) map[i] = -1;
 
@@ -665,17 +669,9 @@ void PairAEAM::read_file(char *filename)
   file->elements = new char *[file->nelements];
   file->nonangular = new char *[file->nnonangular];
   file->angular = new char *[file->nangular];
-  for (i = 2; i < file->nelements; i++) {
-    n = strlen(words[i]) + 1;
-    file->elements[i] = new char[n];
-    strcpy(file->elements[i], words[i]);
-  }
+  for (i = 0; i < file->nelements; i++)
+      file->elements[i] = utils::strdup(words[i + 2]);
 
-  for (i = 0; i < file->nelements; i++) {
-    n = strlen(words[i + 2]) + 1;
-    file->elements[i] = new char[n];
-    strcpy(file->elements[i], words[i + 2]);
-  }
   delete[] words;
 
   file->mass = new double[file->nelements];
