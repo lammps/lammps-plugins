@@ -27,6 +27,9 @@ namespace LAMMPS_NS {
 class PairAEAM : public Pair {
  public:
   double cutforcesq,cutmax;
+  int pack_forward_comm(int, int *, double *, int, int *) override;
+  void unpack_forward_comm(int, int, double *) override;
+  int pack_reverse_comm(int, int, double *) override;
 
   // per-atom arrays
 
@@ -55,8 +58,6 @@ class PairAEAM : public Pair {
   void init_style();
   double init_one(int, int);
 
-  int pack_comm(int, int *, double *, int, int *);
-  void unpack_comm(int, int, double *);
   int pack_reverse_comm(int, int, double *);
   void unpack_reverse_comm(int, int *, double *);
   double memory_usage();

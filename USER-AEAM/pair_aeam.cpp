@@ -956,21 +956,19 @@ void PairAEAM::grab(FILE *fptr, int n, double *list)
 
 /* ---------------------------------------------------------------------- */
 
-int PairAEAM::pack_comm(int n, int *list, double *buf, int pbc_flag, int *pbc)
+int PairAEAM::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/)
 {
-  int i, j, m;
-
-  m = 0;
-  for (i = 0; i < n; i++) {
-    j = list[i];
+  int m = 0;
+  for (int i = 0; i < n; i++) {
+    int j = list[i];
     buf[m++] = fp[j];
   }
-  return 1;
+  return m;
 }
 
 /* ---------------------------------------------------------------------- */
 
-void PairAEAM::unpack_comm(int n, int first, double *buf)
+void PairAEAM::unpack_forward_comm(int n, int first, double *buf)
 {
   int i, m, last;
 
@@ -988,7 +986,7 @@ int PairAEAM::pack_reverse_comm(int n, int first, double *buf)
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) buf[m++] = rho[i];
-  return 1;
+  return m;
 }
 
 /* ---------------------------------------------------------------------- */
