@@ -47,34 +47,34 @@ class FixSemiGrandCanonicalMC : public Fix {
   FixSemiGrandCanonicalMC(class LAMMPS *, int, char **);
 
   /// Fix class destructor.
-  virtual ~FixSemiGrandCanonicalMC();
+  ~FixSemiGrandCanonicalMC() override;
 
   /******************** Virtual methods from Fix base class ************************/
 
   /// The return value of this method specifies at which points the fix is invoked during the simulation.
-  virtual int setmask();
+  int setmask() override;
 
   /// This gets called by the system before the simulation starts.
-  virtual void init();
+  void init() override;
 
   /// Assigns the requested neighbor list to the fix.
-  virtual void init_list(int id, NeighList *ptr);
+  void init_list(int id, NeighList *ptr) override;
 
   /// Called after the EAM force calculation during each timestep.
   /// This method triggers the MC routine from time to time.
-  virtual void post_force(int vflag);
+  void post_force(int vflag) override;
 
   /// Lets the fix report one of its internal state variables to LAMMPS.
-  virtual double compute_vector(int index);
+  double compute_vector(int index) override;
 
   /// This is for MPI communication with neighbor nodes.
-  virtual int pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int *pbc);
-  virtual void unpack_forward_comm(int n, int first, double *buf);
-  virtual int pack_reverse_comm(int n, int first, double *buf);
-  virtual void unpack_reverse_comm(int n, int *list, double *buf);
+  int pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int *pbc) override;
+  void unpack_forward_comm(int n, int first, double *buf) override;
+  int pack_reverse_comm(int n, int first, double *buf) override;
+  void unpack_reverse_comm(int n, int *list, double *buf) override;
 
   /// Reports the memory usage of this fix to LAMMPS.
-  virtual double memory_usage();
+  double memory_usage() override;
 
   /******************** Monte-Carlo routines ************************/
 
@@ -136,15 +136,15 @@ class FixSemiGrandCanonicalMC : public Fix {
 
 #if SGCMC_DEBUG
   /// Allocate atom-based array.
-  void grow_arrays(int);
+  void grow_arrays(int) override;
   /// Copy values within local atom-based array.
-  void copy_arrays(int, int);
+  void copy_arrays(int, int) override;
   /// Initialize one atom's array values, called when atom is created.
-  void set_arrays(int);
+  void set_arrays(int) override;
   /// Pack values in local atom-based array for exchange with another proc.
-  int pack_exchange(int, double *);
+  int pack_exchange(int, double *) override;
   /// Unpack values in local atom-based array from exchange with another proc.
-  int unpack_exchange(int, double *);
+  int unpack_exchange(int, double *) override;
 #endif
 
  private:
@@ -266,9 +266,7 @@ class FixSemiGrandCanonicalMC : public Fix {
   double *trialCounters;
 #endif
 };
-
-};    // namespace LAMMPS_NS
+}    // namespace LAMMPS_NS
 
 #endif    // FIX_SEMIGRANDCANONICAL_MC_H
-
 #endif    // FIX_CLASS
