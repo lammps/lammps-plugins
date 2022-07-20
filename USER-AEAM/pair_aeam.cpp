@@ -18,8 +18,8 @@
 #include "error.h"
 #include "force.h"
 #include "memory.h"
-#include "neighbor.h"
 #include "neigh_list.h"
+#include "neighbor.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -121,9 +121,9 @@ void PairAEAM::compute(int eflag, int vflag)
   double DFij, DFik, DFjk, FFij, FFik, FFjk;
 
   evdwl = 0.0;
-  ev_init(eflag,vflag);
+  ev_init(eflag, vflag);
 
-  constexpr double THIRD = 1.0/3.0;
+  constexpr double THIRD = 1.0 / 3.0;
   constexpr double minrho = 0.0000000000001;
 
   // grow energy and fp arrays if necessary
@@ -157,7 +157,8 @@ void PairAEAM::compute(int eflag, int vflag)
   // zero out density
   if (newton_pair) {
     for (i = 0; i < nall; i++) rho[i] = 0.0;
-  } else for (i = 0; i < nlocal; i++) rho[i] = 0.0;
+  } else
+    for (i = 0; i < nlocal; i++) rho[i] = 0.0;
 
   // rho = density at each atom
   // loop over neighbors of my nonangular dependent atoms
@@ -672,8 +673,7 @@ void PairAEAM::read_file(char *filename)
   file->elements = new char *[file->nelements];
   file->nonangular = new char *[file->nnonangular];
   file->angular = new char *[file->nangular];
-  for (i = 0; i < file->nelements; i++)
-      file->elements[i] = utils::strdup(words[i + 2]);
+  for (i = 0; i < file->nelements; i++) file->elements[i] = utils::strdup(words[i + 2]);
 
   delete[] words;
 
