@@ -1,6 +1,5 @@
 
 # pureAl24Si crystal, structure created by LAMMPS, qeq off
-log             /scratch/saidip/AlSi/Solubility/Al0.75Si.log
 units           metal
 atom_style      atomic
 dimension       3
@@ -23,11 +22,10 @@ set             region MeSi type/fraction 2 0.0075 7683797
 #dump_modify    1 append yes element Si Al
 #restart         100000 /scratch/saidip/AlSi/Solubility/Al0.75Si.restart
 
-fix             1 all npt temp 863.0 863.0 0.1 iso 0.0 0.0 0.1
+fix             1 all nvt temp 863.0 863.0 0.1 #iso 0.0 0.0 0.1
 timestep        0.001
 
-thermo_style    custom step temp etotal pe vol press pxx pyy pzz lx ly lz 
-thermo_modify   norm yes
+thermo_style    custom step temp etotal pe vol press #pxx pyy pzz lx ly lz 
 velocity        all create 863.0 1082337
-thermo          1000
-run             400000
+thermo          100
+run             400
