@@ -115,9 +115,9 @@ using namespace FixConst;
  * that control the Monte Carlo routine.
  *********************************************************************/
 FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), random(NULL), localRandom(NULL), neighborList(NULL),
+    Fix(lmp, narg, arg), random(nullptr), localRandom(nullptr), neighborList(nullptr),
     samplingWindowUserSize(0), samplingWindowPosition(5), nAcceptedSwaps(0), nRejectedSwaps(0),
-    kappa(0), serialMode(false), compute_pe(NULL), pairEAM(NULL)
+    kappa(0), serialMode(false), compute_pe(nullptr), pairEAM(nullptr)
 {
     this->scalar_flag = 0;
     this->vector_flag = 1;
@@ -140,9 +140,9 @@ FixSemiGrandCanonicalMC::FixSemiGrandCanonicalMC(LAMMPS *lmp, int narg, char **a
     this->size_peratom_cols = 0;
     this->peratom_freq = 1;
     this->create_attribute = 1;
-    trialCounters = NULL;
+    trialCounters = nullptr;
     grow_arrays(atom->nmax);
-    ASSERT(trialCounters != NULL || atom->nlocal == 0);
+    ASSERT(trialCounters != nullptr || atom->nlocal == 0);
     memset(trialCounters, 0, sizeof(trialCounters[0]) * atom->nlocal);
 #endif
 
@@ -745,9 +745,9 @@ int FixSemiGrandCanonicalMC::pack_forward_comm(int n, int* list, double* buf, in
     int m = 0;
     if(communicationStage == 1) {
         // Send electron densities of local atoms to neighbors.
-        ASSERT(pairEAM->rho != NULL);
+        ASSERT(pairEAM->rho != nullptr);
 #if CDEAM_MC_SUPPORT
-        if(pairCDEAM == NULL) {
+        if(pairCDEAM == nullptr) {
 #endif
             for(int i = 0; i < n; i++)
                 buf[m++] = pairEAM->rho[list[i]];
@@ -767,7 +767,7 @@ int FixSemiGrandCanonicalMC::pack_forward_comm(int n, int* list, double* buf, in
         if(pairEAM) {
             // Send types and rhos of real atoms to the ghost atoms of the neighbor proc.
 #if CDEAM_MC_SUPPORT
-            if(pairCDEAM == NULL) {
+            if(pairCDEAM == nullptr) {
 #endif
                 for(int i = 0; i < n; i++) {
                     buf[m++] = atom->type[list[i]];
@@ -808,7 +808,7 @@ void FixSemiGrandCanonicalMC::unpack_forward_comm(int n, int first, double* buf)
         // Receive electron densities of ghost atoms from neighbors.
         int last = first + n;
 #if CDEAM_MC_SUPPORT
-        if(pairCDEAM == NULL) {
+        if(pairCDEAM == nullptr) {
 #endif
             for(int i = first; i < last; i++)
                 pairEAM->rho[i] = *buf++;
@@ -830,7 +830,7 @@ void FixSemiGrandCanonicalMC::unpack_forward_comm(int n, int first, double* buf)
             // Receive types and rhos of real atoms of the neighbor proc and assign them
             // to the local ghost atoms.
 #if CDEAM_MC_SUPPORT
-            if(pairCDEAM == NULL) {
+            if(pairCDEAM == nullptr) {
 #endif
                 for(int i = first; i < last; i++, buf += 2) {
                     atom->type[i] = (int)buf[0];
@@ -879,10 +879,10 @@ int FixSemiGrandCanonicalMC::pack_reverse_comm(int n, int first, double* buf)
     int m = 0;
 
     // Send changed electron densities of ghost atoms to the real atoms of neighbor procs.
-    ASSERT(pairEAM->rho != NULL);
+    ASSERT(pairEAM->rho != nullptr);
     int last = first + n;
 #if CDEAM_MC_SUPPORT
-    if(pairCDEAM == NULL) {
+    if(pairCDEAM == nullptr) {
 #endif
         for(int i = first; i < last; i++)
             buf[m++] = pairEAM->rho[i];
@@ -909,9 +909,9 @@ void FixSemiGrandCanonicalMC::unpack_reverse_comm(int n, int *list, double* buf)
 
     // Received changed electron densities of ghost atoms of neighbor procs and assign them to our
     // real atoms.
-    ASSERT(pairEAM->rho != NULL);
+    ASSERT(pairEAM->rho != nullptr);
 #if CDEAM_MC_SUPPORT
-    if(pairCDEAM == NULL) {
+    if(pairCDEAM == nullptr) {
 #endif
         for(int i = 0; i < n; i++, buf++) {
             // We have to make sure that rhos changed locally do not get overridden by the rhos
@@ -942,7 +942,7 @@ void FixSemiGrandCanonicalMC::unpack_reverse_comm(int n, int *list, double* buf)
  *********************************************************************/
 bool FixSemiGrandCanonicalMC::placeSamplingWindow()
 {
-    ASSERT(neighborList != NULL);
+    ASSERT(neighborList != nullptr);
     ASSERT(neighborList->inum == atom->nlocal);
 
     // By default the size of the sampling window is the size of the processor bounds minus two cutoff radii.
@@ -1170,7 +1170,7 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeEAM(int flipAtom, int flipAto
  *********************************************************************/
 double FixSemiGrandCanonicalMC::computeEnergyChangeCDEAM(int flipAtom, int flipAtomNL, int oldSpecies, int newSpecies)
 {
-    ASSERT(pairCDEAM != NULL);  // Make sure we have a CD-EAM potential in use.
+    ASSERT(pairCDEAM != nullptr);  // Make sure we have a CD-EAM potential in use.
 
     double p;
     int m;
@@ -1611,7 +1611,7 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeGeneric(int flipAtom, int old
  *********************************************************************/
 double FixSemiGrandCanonicalMC::computeTotalEnergy()
 {
-    ASSERT(compute_pe != NULL);
+    ASSERT(compute_pe != nullptr);
 
     int eflag = 1;
     int vflag = 0;
