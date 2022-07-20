@@ -18,8 +18,6 @@ FixStyle(sgcmc,FixSemiGrandCanonicalMC)
 #define FIX_SEMIGRANDCANONICAL_MC_H
 
 #include "fix.h"
-#include "random_park.h"
-#include "pair_eam.h"
 
 // Setting this to 1 enables support for the concentration-dependent EAM potential (pair_style eam/cd) 
 // in the Monte Carlo routine. Setting to 0 limits support to standard EAM only and removes all dependencies
@@ -36,13 +34,6 @@ FixStyle(sgcmc,FixSemiGrandCanonicalMC)
 // Setting this to 1 enables additional debugging/sanity checks (with a small performance penalty).
 #ifndef SGCMC_DEBUG
 #define SGCMC_DEBUG                             0
-#endif
-
-#if CDEAM_MC_SUPPORT
- #include "pair_eam_cd.h"
-#endif
-#if TERSOFF_MC_SUPPORT
- #include "pair_tersoff.h"
 #endif
 
 #include <vector>
@@ -200,11 +191,11 @@ private:
 	/// The master seed value for the random number generators on all nodes.
 	int seed;
 
-	/// The random number generator that is in sync with all other nodes.
-	RanPark* random;
+        /// The random number generator that is in sync with all other nodes.
+        class RanPark* random;
 
-	/// The local random number generator for this proc only.
-	RanPark* localRandom;
+        /// The local random number generator for this proc only.
+        class RanPark* localRandom;
 
 	/// The total number of atoms of the different species in the whole system.
 	/// Divide this by the total number of atoms to get the global concentration.
@@ -237,22 +228,22 @@ private:
 	/// The number of local atoms that are in the fix group.
 	int numFixAtomsLocal;
 
-	/// Pointer to the EAM potential class.
-	/// This is required to access the Rho arrays calculated by the potential class and its potential tables.
-	PairEAM* pairEAM;
+        /// Pointer to the EAM potential class.
+        /// This is required to access the Rho arrays calculated by the potential class and its potential tables.
+        class PairEAM* pairEAM;
 
 #if CDEAM_MC_SUPPORT
-	/// Pointer to the CD-EAM potential class.
-	/// This is required to access the RhoB arrays calculated by the potential class.
-	/// The pointer is NULL if only the standard EAM model is used in the simulation.
-	PairEAMCD* pairCDEAM;
+        /// Pointer to the CD-EAM potential class.
+        /// This is required to access the RhoB arrays calculated by the potential class.
+        /// The pointer is NULL if only the standard EAM model is used in the simulation.
+        class PairEAMCD* pairCDEAM;
 #endif
 
 #if TERSOFF_MC_SUPPORT
-	/// Pointer to the Tersoff potential class.
-	/// This is required to access the parameters of the potential when computing the
-	/// change in energy.
-	PairTersoff* pairTersoff;
+        /// Pointer to the Tersoff potential class.
+        /// This is required to access the parameters of the potential when computing the
+        /// change in energy.
+        class PairTersoff* pairTersoff;
 #endif
 
 	/// This array contains a boolean value per atom (real and ghosts) that indicates whether

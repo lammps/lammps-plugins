@@ -62,11 +62,8 @@
  *
 ------------------------------------------------------------------------- */
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <iostream>
 #include "fix_semigrandcanonical_mc.h"
+
 #include "atom.h"
 #include "update.h"
 #include "error.h"
@@ -88,8 +85,20 @@
 #include "neigh_list.h"
 #include "integrate.h"
 
+#include "pair_eam.h"
+#include "random_park.h"
+
+#if CDEAM_MC_SUPPORT
+ #include "pair_eam_cd.h"
+#endif
+#if TERSOFF_MC_SUPPORT
+ #include "pair_tersoff.h"
+#endif
+
+#include <cstring>
+#include <cstdlib>
+
 using namespace LAMMPS_NS;
-using namespace std;
 using namespace FixConst;
 
 // This is for debugging purposes. The ASSERT() macro is used in the code to check
