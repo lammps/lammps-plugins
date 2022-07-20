@@ -15,8 +15,10 @@ if(NOT LAMMPS_SOURCE_DIR)
   message(FATAL_ERROR "Must set LAMMPS_SOURCE_DIR variable")
 endif()
 set(CMAKE_MODULE_PATH "${LAMMPS_SOURCE_DIR}/../cmake/Modules")
-include(CheckIncludeFileCXX)
-include(LAMMPSInterfacePlugin)
+if (NOT TARGET lammps)
+  include(CheckIncludeFileCXX)
+  include(LAMMPSInterfacePlugin)
+endif()
 
 ##########################
 # building the plugins
@@ -40,12 +42,17 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   if(MAKENSIS_PATH)
       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../lammps.ico
       ${CMAKE_CURRENT_SOURCE_DIR}/../lammps-text-logo-wide.bmp ${CMAKE_CURRENT_SOURCE_DIR}/aeamplugin.nsis ${CMAKE_BINARY_DIR})
+    if(TARGET package)
+      set(mytarget package-USER-AEAM)
+    else()
+      set(mytarget package)
+    endif()
     if(BUILD_MPI)
-      add_custom_target(package ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI aeamplugin.nsis
+      add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI aeamplugin.nsis
         DEPENDS aeamplugin
         BYPRODUCTS LAMMPS-USER-AEAM-plugin-${LAMMPS_VERSION}-MPI.exe)
     else()
-      add_custom_target(package ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION} aeamplugin.nsis
+      add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION} aeamplugin.nsis
         COMMAND ${CMAKE_COMMAND} -E echo ${PWD}
         DEPENDS aeamplugin lammps.ico lammps-text-logo-wide.bmp aeamplugin.nsis
         BYPRODUCTS LAMMPS-USER-AEAM-plugin-${LAMMPS_VERSION}.exe)
