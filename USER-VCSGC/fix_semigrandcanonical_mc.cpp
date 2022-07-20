@@ -1085,9 +1085,9 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeEAM(int flipAtom, int flipAto
 
         p = r * pairEAM->rdr + 1.0;
         m = static_cast<int>(p);
-        m = min(m, pairEAM->nr - 1);
+        m = MIN(m, pairEAM->nr - 1);
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
 
         // Calculate change of pair energy ij.
         coeff = pairEAM->z2r_spline[pairEAM->type2z2r[oldSpecies][jtype]][m];
@@ -1110,18 +1110,18 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeEAM(int flipAtom, int flipAto
         // Calculate old embedding energy of atom j.
         p = rho[j] * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[jtype]][m];
         double oldF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
         // Calculate new embedding energy of atom j.
         p = (rho[j] + delta_rho) * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[jtype]][m];
         double newF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
@@ -1131,17 +1131,17 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeEAM(int flipAtom, int flipAto
     // Compute the change in embedding energy of the changing atom.
     p = rho[flipAtom] * pairEAM->rdrho + 1.0;
     m = static_cast<int>(p);
-    m = max(1, min(m, pairEAM->nrho - 1));
+    m = MAX(1, MIN(m, pairEAM->nrho - 1));
     p -= m;
-    p = min(p, 1.0);
+    p = MIN(p, 1.0);
     coeff = pairEAM->frho_spline[pairEAM->type2frho[oldSpecies]][m];
     double oldF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
     p = new_total_rho_i * pairEAM->rdrho + 1.0;
     m = static_cast<int>(p);
-    m = max(1, min(m, pairEAM->nrho - 1));
+    m = MAX(1, MIN(m, pairEAM->nrho - 1));
     p -= m;
-    p = min(p, 1.0);
+    p = MIN(p, 1.0);
     coeff = pairEAM->frho_spline[pairEAM->type2frho[newSpecies]][m];
     double newF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
@@ -1217,9 +1217,9 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeCDEAM(int flipAtom, int flipA
 
         p = r * pairEAM->rdr + 1.0;
         m = static_cast<int>(p);
-        m = min(m, pairEAM->nr - 1);
+        m = MIN(m, pairEAM->nr - 1);
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
 
         // Calculate change of electron density at site j.
         coeff = pairEAM->rhor_spline[pairEAM->type2rhor[oldSpecies][jtype]][m];
@@ -1313,18 +1313,18 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeCDEAM(int flipAtom, int flipA
         // Calculate old embedding energy of atom j.
         p = rho[j] * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[jtype]][m];
         double oldF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
         // Calculate new embedding energy of atom j.
         p = (rho[j] + delta_rho) * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[jtype]][m];
         double newF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
@@ -1348,9 +1348,9 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeCDEAM(int flipAtom, int flipA
         // Compute the change in embedding energy of the swapping atom.
         p = rho[flipAtom] * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[oldSpecies]][m];
         double oldF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
         coeff = pairEAM->frho_spline[pairEAM->type2frho[newSpecies]][m];
@@ -1373,17 +1373,17 @@ double FixSemiGrandCanonicalMC::computeEnergyChangeCDEAM(int flipAtom, int flipA
         // Compute the change in embedding energy of the swapping atom.
         p = rho[flipAtom] * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[oldSpecies]][m];
         double oldF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
         p = new_total_rho_i * pairEAM->rdrho + 1.0;
         m = static_cast<int>(p);
-        m = max(1, min(m, pairEAM->nrho - 1));
+        m = MAX(1, MIN(m, pairEAM->nrho - 1));
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
         coeff = pairEAM->frho_spline[pairEAM->type2frho[newSpecies]][m];
         double newF = ((coeff[3]*p + coeff[4])*p + coeff[5])*p + coeff[6];
 
@@ -1696,9 +1696,9 @@ void FixSemiGrandCanonicalMC::flipAtomEAM(int flipAtom, int flipAtomNL, int oldS
         double r = sqrt(rsq);
         p = r * pairEAM->rdr + 1.0;
         m = static_cast<int>(p);
-        m = min(m, pairEAM->nr - 1);
+        m = MIN(m, pairEAM->nr - 1);
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
 
         // Calculate change of electron density at site j.
         coeff = pairEAM->rhor_spline[pairEAM->type2rhor[oldSpecies][jtype]][m];
@@ -1784,9 +1784,9 @@ void FixSemiGrandCanonicalMC::flipAtomCDEAM(int flipAtom, int flipAtomNL, int ol
         double r = sqrt(rsq);
         p = r * pairEAM->rdr + 1.0;
         m = static_cast<int>(p);
-        m = min(m, pairEAM->nr - 1);
+        m = MIN(m, pairEAM->nr - 1);
         p -= m;
-        p = min(p, 1.0);
+        p = MIN(p, 1.0);
 
         // Calculate change of electron density at site j.
         coeff = pairEAM->rhor_spline[pairEAM->type2rhor[oldSpecies][jtype]][m];
