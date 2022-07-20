@@ -80,8 +80,6 @@ class PairAEAM : public Pair {
   void array2spline();
   void interpolate(int, double, double *, double **);
 
-  void grab(FILE *, int, double *);
-
   virtual void read_file(char *);
   virtual void file2array();
 };

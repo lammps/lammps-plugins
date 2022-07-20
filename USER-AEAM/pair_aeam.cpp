@@ -20,6 +20,8 @@
 #include "memory.h"
 #include "neigh_list.h"
 #include "neighbor.h"
+#include "text_file_reader.h"
+#include "tokenizer.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -28,7 +30,6 @@
 using namespace LAMMPS_NS;
 
 #define MAXLINE 1024
-#define DELTA 4
 
 /* ---------------------------------------------------------------------- */
 
@@ -142,7 +143,6 @@ void PairAEAM::compute(int eflag, int vflag)
   int *type = atom->type;
   int nlocal = atom->nlocal;
   int nall = nlocal + atom->nghost;
-  int newton_pair = force->newton_pair;
 
   int nnonangular = setfl->nnonangular;
   double cuttempij, cuttempik, CutDec;
@@ -154,11 +154,8 @@ void PairAEAM::compute(int eflag, int vflag)
 
   int itypemap, jtypemap, ktypemap;
 
-  // zero out density
-  if (newton_pair) {
-    for (i = 0; i < nall; i++) rho[i] = 0.0;
-  } else
-    for (i = 0; i < nlocal; i++) rho[i] = 0.0;
+  // zero out density. newton on is required (see init_style());
+  for (i = 0; i < nall; i++) rho[i] = 0.0;
 
   // rho = density at each atom
   // loop over neighbors of my nonangular dependent atoms
@@ -255,9 +252,9 @@ void PairAEAM::compute(int eflag, int vflag)
     }
   }
 
-  // communicate and sum densities
+  // communicate and sum densities. note: newton_pair is required to on.
 
-  if (newton_pair) comm->reverse_comm(this);
+  comm->reverse_comm(this);
 
   double ni, deli, ci, Fptmp;
 
@@ -328,11 +325,9 @@ void PairAEAM::compute(int eflag, int vflag)
       ci = 2;
     }
 
+    //for Me Fptmp=1  for Si Fptmp=0.5(2sum(fij.fik.ftet)))^(-0.5)=0.5/rho(i)
     if (rho[i] > minrho)
-      Fptmp = ni *
-          pow(rho[i],
-              (ni -
-               1));    //for Me Fptmp=1  for Si Fptmp=0.5(2sum(fij.fik.ftet)))^(-0.5)=0.5/rho(i)
+      Fptmp = ni * pow(rho[i], (ni - 1));
     else
       Fptmp = 0;
 
@@ -340,7 +335,6 @@ void PairAEAM::compute(int eflag, int vflag)
     jnum = numneigh[i];
 
     for (jj = 0; jj < jnum; jj++) {
-
       j = jlist[jj];
       j &= NEIGHMASK;
       jtype = type[j];
@@ -396,12 +390,11 @@ void PairAEAM::compute(int eflag, int vflag)
       }
 
       if (evflag)
-        ev_tally(i, j, nlocal, newton_pair, 0.0, 0.0, fpair, delr1[0], delr1[1], delr1[2]);
+        ev_tally(i, j, nlocal, 1 /*newton_pair*/, 0.0, 0.0, fpair, delr1[0], delr1[1], delr1[2]);
 
-      if (itype <= setfl->nnonangular)
+      if (itype <= setfl->nnonangular) {
         continue;    //atom I is Au
-
-      else {    //atom I is Si
+      } else {       //atom I is Si
         for (kk = jj + 1; kk < jnum; kk++) {
 
           k = jlist[kk];
@@ -607,6 +600,8 @@ void PairAEAM::coeff(int narg, char **arg)
 
 void PairAEAM::init_style()
 {
+  if (force->newton_pair == 0) error->all(FLERR, "Pair style aeam requires newton pair on");
+
   file2array();
   array2spline();
 
@@ -638,12 +633,9 @@ void PairAEAM::read_file(char *filename)
   char line[MAXLINE];
 
   if (me == 0) {
-    fptr = fopen(filename, "r");
-    if (fptr == nullptr) {
-      char str[128];
-      sprintf(str, "Cannot open AEAM potential file %s", filename);
-      error->one(FLERR, str);
-    }
+    fptr = utils::open_potential(filename, lmp, nullptr);
+    if (fptr == nullptr)
+      error->one(FLERR, "Cannot open AEAM potential file {}: {}", filename, utils::getsyserror());
   }
 
   /*-----------------------------------------------------------------------------
@@ -660,22 +652,18 @@ void PairAEAM::read_file(char *filename)
   MPI_Bcast(&n, 1, MPI_INT, 0, world);
   MPI_Bcast(line, n, MPI_CHAR, 0, world);
 
-  sscanf(line, "%d %d %d", &file->nelements, &file->nnonangular, &file->nangular);
-  int nwords = utils::count_words(line);
-  if (nwords != file->nelements + 3 || file->nelements != file->nnonangular + file->nangular)
-    error->all(FLERR, "Incorrect element names in AEAM potential file");
-
-  char **words = new char *[file->nelements + 3];
-  nwords = 0;
-  char *first = strtok(line, " \t\n\r\f");
-  while (words[nwords++] = strtok(NULL, " \t\n\r\f")) continue;
-
-  file->elements = new char *[file->nelements];
-  file->nonangular = new char *[file->nnonangular];
-  file->angular = new char *[file->nangular];
-  for (i = 0; i < file->nelements; i++) file->elements[i] = utils::strdup(words[i + 2]);
-
-  delete[] words;
+  try {
+    ValueTokenizer values(line);
+    file->nelements = values.next_int();
+    file->nnonangular = values.next_int();
+    file->nangular = values.next_int();
+    file->elements = new char *[file->nelements];
+    file->nonangular = new char *[file->nnonangular];
+    file->angular = new char *[file->nangular];
+    for (i = 0; i < file->nelements; i++) file->elements[i] = utils::strdup(values.next_string());
+  } catch (std::exception &e) {
+    error->all(FLERR, "AEAM potential file parser error: {}", e.what());
+  }
 
   file->mass = new double[file->nelements];
   file->nrho = new int[file->nelements];
@@ -687,7 +675,14 @@ void PairAEAM::read_file(char *filename)
   for (i = 0; i < file->nelements; i++) {
     if (me == 0) {
       fgets(line, MAXLINE, fptr);
-      sscanf(line, "%d %lg %lg", &file->nrho[i], &file->drho[i], &file->mass[i]);
+      try {
+        ValueTokenizer values(line);
+        file->nrho[i] = values.next_int();
+        file->drho[i] = values.next_double();
+        file->mass[i] = values.next_double();
+      } catch (std::exception &e) {
+        error->one(FLERR, "AEAM potential file parser error: {}", e.what());
+      }
     }
 
     MPI_Bcast(&file->nrho[i], 1, MPI_INT, 0, world);
@@ -705,7 +700,14 @@ void PairAEAM::read_file(char *filename)
     for (j = 0; j < file->nelements; j++) {
       if (me == 0) {
         fgets(line, MAXLINE, fptr);
-        sscanf(line, "%d %lg %lg", &file->nr[i][j], &file->dr[i][j], &file->cut[i][j]);
+        try {
+          ValueTokenizer values(line);
+          file->nr[i][j] = values.next_int();
+          file->dr[i][j] = values.next_double();
+          file->cut[i][j] = values.next_double();
+        } catch (std::exception &e) {
+          error->one(FLERR, "AEAM potential file parser error: {}", e.what());
+        }
       }
 
       MPI_Bcast(&file->nr[i][j], 1, MPI_INT, 0, world);
@@ -719,23 +721,27 @@ void PairAEAM::read_file(char *filename)
   memory->create(file->rhor, file->nelements, file->nelements, file->nrmax + 1, "pair:rhor");
   memory->create(file->z2r, file->nelements, file->nelements, file->nrmax + 1, "pair:z2r");
 
+  TextFileReader *reader = nullptr;
+  if (me == 0) reader = new TextFileReader(fptr, "AEAM");
+
   for (i = 0; i < file->nelements; i++) {
-    if (me == 0) grab(fptr, file->nrho[i], &file->frho[i][1]);
+    if (me == 0) reader->next_dvector(&file->frho[i][1], file->nrho[i]);
     MPI_Bcast(&file->frho[i][1], file->nrho[i], MPI_DOUBLE, 0, world);
   }
 
   for (i = 0; i < file->nelements; i++)
     for (j = 0; j < file->nelements; j++) {
-      if (me == 0) grab(fptr, file->nr[i][j], &file->rhor[i][j][1]);
+      if (me == 0) reader->next_dvector(&file->rhor[i][j][1], file->nr[i][j]);
       MPI_Bcast(&file->rhor[i][j][1], file->nr[i][j], MPI_DOUBLE, 0, world);
     }
 
   for (i = 0; i < file->nelements; i++)
     for (j = 0; j <= i; j++) {
-      if (me == 0) grab(fptr, file->nr[i][j], &file->z2r[i][j][1]);
+      if (me == 0) reader->next_dvector(&file->z2r[i][j][1], file->nr[i][j]);
       MPI_Bcast(&file->z2r[i][j][1], file->nr[i][j], MPI_DOUBLE, 0, world);
     }
 
+  delete reader;
   if (me == 0) fclose(fptr);
 }
 
@@ -932,26 +938,6 @@ void PairAEAM::interpolate(int n, double delta, double *f, double **spline)
     spline[m][2] = spline[m][5] / delta;
     spline[m][1] = 2.0 * spline[m][4] / delta;
     spline[m][0] = 3.0 * spline[m][3] / delta;
-  }
-}
-
-/* ----------------------------------------------------------------------
-   grab n values from file fp and put them in list
-   values can be several to a line
-   only called by proc 0
-------------------------------------------------------------------------- */
-
-void PairAEAM::grab(FILE *fptr, int n, double *list)
-{
-  char *ptr;
-  char line[MAXLINE];
-
-  int i = 0;
-  while (i < n) {
-    fgets(line, MAXLINE, fptr);
-    ptr = strtok(line, " \t\n\r\f");
-    list[i++] = atof(ptr);
-    while (ptr = strtok(NULL, " \t\n\r\f")) list[i++] = atof(ptr);
   }
 }
 
