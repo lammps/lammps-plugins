@@ -36,7 +36,6 @@ PairAEAM::PairAEAM(LAMMPS *lmp) : Pair(lmp)
 {
   restartinfo = 0;
   manybody_flag = 1;
-//  embedstep = -1;
   unit_convert_flag = utils::get_supported_conversions(utils::ENERGY);
 
   nmax = 0;
@@ -104,17 +103,14 @@ void PairAEAM::compute(int eflag, int vflag)
 {
   int i, j, k, ii, jj, kk, m, m1, m2;
   int itype, jtype, ktype;
-  double xtmp, ytmp, ztmp, delx, dely, delz, evdwl, fpair;
-  double r1, r2, r3, p, p1, p2, rhoip, rhojp, z2, z2p, recip, phip, psip, phi, rsq1, rsq2, rsq3;
+  double xtmp, ytmp, ztmp, evdwl, fpair;
+  double r1, r2, r3, p, p1, p2, recip, phip, phi, rsq1, rsq2, rsq3;
   double *coeff, delr1[3], delr2[3], delr3[3], fj[3], fk[3];
-  int *ilist_half, *numneigh_half, **firstneigh_half, *jlist_half, inum_half, jnum_half;
   int *ilist, *numneigh, **firstneigh, *jlist, inum, jnum;
   double fij, fik, cs, delcs, ftet, delcs2;
   double dcosij, dcosik, dcosjk;
-  double dfij, dfik, dfijr, dfikr;
-  double fptet1[3], fptet2[3];
+  double dfij, dfik, dfijr;
   double poteam, Feam, F2b;
-  double egy3;
   double DFij, DFik, DFjk, FFij, FFik, FFjk;
 
   evdwl = 0.0;
@@ -138,9 +134,9 @@ void PairAEAM::compute(int eflag, int vflag)
   double **f = atom->f;
   int *type = atom->type;
   int nlocal = atom->nlocal;
+  int nall = nlocal + atom->nghost;
   int newton_pair = force->newton_pair;
 
-  int nangular = setfl->nangular;
   int nnonangular = setfl->nnonangular;
   double cuttempij, cuttempik, CutDec;
 
@@ -152,9 +148,9 @@ void PairAEAM::compute(int eflag, int vflag)
   int itypemap, jtypemap, ktypemap;
 
   // zero out density
-  // newton_pair is always on
-  m = nlocal + atom->nghost;
-  for (i = 0; i < m; i++) rho[i] = 0.0;
+  if (newton_pair) {
+    for (i = 0; i < nall; i++) rho[i] = 0.0;
+  } else for (i = 0; i < nlocal; i++) rho[i] = 0.0;
 
   // rho = density at each atom
   // loop over neighbors of my nonangular dependent atoms
@@ -203,9 +199,7 @@ void PairAEAM::compute(int eflag, int vflag)
       if (itype <= setfl->nnonangular) {    //atom I is noangular
         rho[i] += fij;
 
-      }
-
-      else {    //atom I is angular
+      } else {    //atom I is angular
         for (kk = jj + 1; kk < jnum; kk++) {
 
           k = jlist[kk];
@@ -290,14 +284,16 @@ void PairAEAM::compute(int eflag, int vflag)
     coeff = frho_spline[type2frho[itype]][m];
     fp[i] = (coeff[0] * p + coeff[1]) * p + coeff[2];    //F'(sum(fij))
     if (eflag) {
-      poteam = ((coeff[3] * p + coeff[4]) * p + coeff[5]) * p +
-          coeff[6];    //F(rhoi) for all atoms F(sum(fij)) for Me F(2sum(fij.fik.ftet)^0.5 for Si
+      //F(rhoi) for all atoms F(sum(fij)) for Me F(2sum(fij.fik.ftet)^0.5 for Si
+      poteam = ((coeff[3] * p + coeff[4]) * p + coeff[5]) * p + coeff[6];
       if (eflag_global) eng_vdwl += poteam;
-      if (eflag_atom)
-        if (itype <= nnonangular)
+      if (eflag_atom) {
+        if (itype <= nnonangular) {
           eatom[i] += poteam;
-        else
+        } else {
           eatom[i] += THIRD * poteam;
+        }
+      }
     }
   }
 
@@ -513,7 +509,7 @@ void PairAEAM::allocate()
  global settings 
  ------------------------------------------------------------------------- */
 
-void PairAEAM::settings(int narg, char **arg)
+void PairAEAM::settings(int narg, char ** /*arg*/)
 {
 
   if (narg != 0) error->all(FLERR, "Illegal pair_style command");
@@ -726,8 +722,6 @@ void PairAEAM::read_file(char *filename)
       if (me == 0) grab(fptr, file->nr[i][j], &file->rhor[i][j][1]);
       MPI_Bcast(&file->rhor[i][j][1], file->nr[i][j], MPI_DOUBLE, 0, world);
     }
-
-  int k;
 
   for (i = 0; i < file->nelements; i++)
     for (j = 0; j <= i; j++) {
