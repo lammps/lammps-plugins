@@ -72,6 +72,10 @@ PairAEAM::~PairAEAM()
     delete[] type2frho;
     memory->destroy(type2rhor);
     memory->destroy(type2z2r);
+    delete[] nrrho;
+    delete[] drrho;
+    delete[] nrz2r;
+    delete[] drz2r;
   }
 
   if (setfl) {
@@ -82,6 +86,9 @@ PairAEAM::~PairAEAM()
     delete[] setfl->mass;
     delete[] setfl->nrho;
     delete[] setfl->drho;
+    memory->destroy(setfl->nr);
+    memory->destroy(setfl->dr);
+    memory->destroy(setfl->cut);
     memory->destroy(setfl->frho);
     memory->destroy(setfl->rhor);
     memory->destroy(setfl->z2r);
