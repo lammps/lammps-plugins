@@ -60,7 +60,6 @@ class PairAEAM : public Pair {
   int pack_reverse_comm(int, int, double *);
   void unpack_reverse_comm(int, int *, double *);
   double memory_usage();
-  void swap_aeam(double *, double **);
 	
 	
 

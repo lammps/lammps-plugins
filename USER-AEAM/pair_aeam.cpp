@@ -1015,14 +1015,3 @@ double PairAEAM::memory_usage()
   bytes += 2 * nmax * sizeof(double);
   return bytes;
 }
-
-/* ----------------------------------------------------------------------
-   swap fp array with one passed in by caller
-------------------------------------------------------------------------- */
-
-void PairAEAM::swap_aeam(double *fp_caller, double **fp_caller_hold)
-{
-  double *tmp = fp;
-  fp = fp_caller;
-  *fp_caller_hold = tmp;
-}
