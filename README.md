@@ -3,10 +3,11 @@ various sources that is not part of the LAMMPS distribution
 for a number of reasons, but ported to be compatible with the
 23 June 2022 LAMMPS release and converted to create plugins.
 
-| Folders    | Origin of source code                              |
-|------------|----------------------------------------------------|
-| USER-AEAM  | https://github.com/psaidi/AEAM                     |
-| USER-VCSGC | https://gitlab.com/materials-modeling/vcsgc-lammps |
+| Folders      | Origin of source code                              |
+|--------------|----------------------------------------------------|
+| USER-AEAM    | https://github.com/psaidi/AEAM                     |
+| USER-REBOMOS | https://matsci.org/t/pair-rebomos/30503            |
+| USER-VCSGC   | https://gitlab.com/materials-modeling/vcsgc-lammps |
 
 To compile and configure all plugins
 
