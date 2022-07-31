@@ -1,3 +1,4 @@
+// clang-format off
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    http://lammps.sandia.gov, Sandia National Laboratories
@@ -24,46 +25,50 @@
    LAMMPS file contributing authors: James Stewart, Khanh Dang and Douglas Spearot (University of Arkansas)
 ------------------------------------------------------------------------- */
 
-#include "math.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include "mpi.h"
+// clang-format on
+
 #include "pair_rebomos.h"
 #include "atom.h"
-#include "neighbor.h"
-#include "neigh_request.h"
-#include "force.h"
 #include "comm.h"
-#include "neighbor.h"
+#include "error.h"
+#include "force.h"
+#include "math_const.h"
+#include "math_special.h"
+#include "memory.h"
 #include "neigh_list.h"
 #include "neigh_request.h"
-#include "math_const.h"
-#include "memory.h"
-#include "error.h"
+#include "neighbor.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
 
 #define MAXLINE 1024
 #define TOL 1.0e-9
-#define PI 3.141592653
 #define PGDELTA 1
+
+// clang-format off
 
 /* ---------------------------------------------------------------------- */
 
 PairREBOMoS::PairREBOMoS(LAMMPS *lmp) : Pair(lmp)
 {
   single_enable = 0;
+  restartinfo = 0;
   one_coeff = 1;
   ghostneigh = 1;
+  manybody_flag = 1;
+  centroidstressflag = CENTROID_NOTAVAIL;
 
   maxlocal = 0;
-  REBO_numneigh = NULL;
-  REBO_firstneigh = NULL;
+  REBO_numneigh = nullptr;
+  REBO_firstneigh = nullptr;
   maxpage = 0;
-  pages = NULL;
-  nM = nS = NULL;
+  pages = nullptr;
+  nM = nS = nullptr;
 }
 
 /* ----------------------------------------------------------------------
@@ -214,10 +219,7 @@ void PairREBOMoS::init_style()
 
   // need a full neighbor list, including neighbors of ghosts
 
-  int irequest = neighbor->request(this);
-  neighbor->requests[irequest]->half = 0;
-  neighbor->requests[irequest]->full = 1;
-  neighbor->requests[irequest]->ghost = 1;
+  neighbor->add_request(this,NeighConst::REQ_FULL|NeighConst::REQ_GHOST);
 
   // local REBO neighbor list memory
 
@@ -927,8 +929,8 @@ double PairREBOMoS::gSpline(double costh, int typei, double *dgdc)
         gcos = b0[typei] + b1[typei]*costh + b2[typei]*pow(costh,2) + b3[typei]*pow(costh,3) + b4[typei]*pow(costh,4) + b5[typei]*pow(costh,5) + b6[typei]*pow(costh,6);
         dgcos = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*pow(costh,2) + 4*b4[typei]*pow(costh,3) + 5*b5[typei]*pow(costh,4) + 6*b6[typei]*pow(costh,5);
 
-        psi = 0.5*(1 - cos(2*PI*(costh - 0.5)));
-        dpsi = PI*sin(2*PI*(costh - 0.5));
+        psi = 0.5*(1 - cos(2*MY_PI*(costh - 0.5)));
+        dpsi = MY_PI*sin(2*MY_PI*(costh - 0.5));
 
         gamma = bg0[typei] + bg1[typei]*costh + bg2[typei]*pow(costh,2) + bg3[typei]*pow(costh,3) + bg4[typei]*pow(costh,4) + bg5[typei]*pow(costh,5) + bg6[typei]*pow(costh,6);
         dgamma = bg1[typei] + 2*bg2[typei]*costh + 3*bg3[typei]*pow(costh,2) + 4*bg4[typei]*pow(costh,3) + 5*bg5[typei]*pow(costh,4) + 6*bg6[typei]*pow(costh,5);
@@ -1008,7 +1010,7 @@ void PairREBOMoS::read_file(char *filename)
 
   if (me == 0) {
     FILE *fp = fopen(filename,"r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
       char str[128];
       sprintf(str,"Cannot open MoS-REBO potential file %s",filename);
       error->one(FLERR,str);

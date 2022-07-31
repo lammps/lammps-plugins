@@ -16,7 +16,7 @@ extern "C" void lammpsplugin_init(void *lmp, void *handle, void *regfunc)
   lammpsplugin_t plugin;
   lammpsplugin_regfunc register_plugin = (lammpsplugin_regfunc) regfunc;
 
-  // register pace pair style
+  // register aeam pair style
   plugin.version = LAMMPS_VERSION;
   plugin.style = "pair";
   plugin.name = "aeam";

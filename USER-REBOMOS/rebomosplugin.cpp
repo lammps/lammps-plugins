@@ -8,7 +8,7 @@ using namespace LAMMPS_NS;
 
 static Pair *pair_rebomos_creator(LAMMPS *lmp)
 {
-  return new PairREBOMOS(lmp);
+  return new PairREBOMoS(lmp);
 }
 
 extern "C" void lammpsplugin_init(void *lmp, void *handle, void *regfunc)
@@ -16,7 +16,7 @@ extern "C" void lammpsplugin_init(void *lmp, void *handle, void *regfunc)
   lammpsplugin_t plugin;
   lammpsplugin_regfunc register_plugin = (lammpsplugin_regfunc) regfunc;
 
-  // register pace pair style
+  // register rebomos pair style
   plugin.version = LAMMPS_VERSION;
   plugin.style = "pair";
   plugin.name = "rebomos";
