@@ -22,3 +22,8 @@ plugin folders to configure and build only those plugin.
 Please see README files in the individual folders for additional information.
 
 For more information on plugins please see: https://docs.lammps.org/Developer_plugins.html
+
+**WARNING:**
+No attempt has been made by the LAMMPS developers to validate or
+document the source code made available here.  All we have checked
+is that it can run the included example inputs without crashing.
