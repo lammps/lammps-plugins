@@ -48,6 +48,8 @@
 using namespace LAMMPS_NS;
 using namespace MathConst;
 using MathSpecial::powint;
+using MathSpecial::cube;
+using MathSpecial::square;
 
 #define MAXLINE 1024
 #define TOL 1.0e-9
@@ -572,7 +574,7 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
       // Below 0.95*sigma
       else if (rij < 0.95*sigma[itype][jtype] && rij >= rcLJmin[itype][jtype]){
               dr = 0.95*sigma[itype][jtype] - rcLJmin[itype][jtype];
-              r6 = pow((sigma[itype][jtype]/(0.95*sigma[itype][jtype])),6);
+              r6 = powint((sigma[itype][jtype]/(0.95*sigma[itype][jtype])),6);
               vdw = 4*epsilon[itype][jtype]*r6*(r6 - 1.0);
               dvdw = (-4*epsilon[itype][jtype]/(0.95*sigma[itype][jtype]))*r6*(12.0*r6 - 6.0);
               c2 = ((3.0/dr)*vdw - dvdw)/dr;
@@ -672,7 +674,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
   dp = 0.0;
   PijS = PijSpline(NijM,NijS,itype,&dp);
   pij = pow(1.0+Etmp+PijS,-0.5);
-  tmp = -0.5*pow(pij,3.0);
+  tmp = -0.5*cube(pij);
 
   // derivative calculations
 
@@ -800,7 +802,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
   dp = 0.0;
   PjiS = PijSpline(NjiM,NjiS,jtype,&dp);
   pji = pow(1.0+Etmp+PjiS,-0.5);
-  tmp = -0.5*pow(pji,3.0);
+  tmp = -0.5*cube(pji);
 
   REBO_neighs = REBO_firstneigh[j];
   for (l = 0; l < REBO_numneigh[j]; l++) {
@@ -823,11 +825,11 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
       dcosijldri[2] = (-rjl[2]/(rijmag*rjlmag)) -
         (cosijl*rij[2]/(rijmag*rijmag));
       dcosijldrj[0] = ((-rij[0]+rjl[0])/(rijmag*rjlmag)) +
-        (cosijl*((rij[0]/pow(rijmag,2.0))-(rjl[0]/(rjlmag*rjlmag))));
+        (cosijl*((rij[0]/square(rijmag))-(rjl[0]/(rjlmag*rjlmag))));
       dcosijldrj[1] = ((-rij[1]+rjl[1])/(rijmag*rjlmag)) +
-        (cosijl*((rij[1]/pow(rijmag,2.0))-(rjl[1]/(rjlmag*rjlmag))));
+        (cosijl*((rij[1]/square(rijmag))-(rjl[1]/(rjlmag*rjlmag))));
       dcosijldrj[2] = ((-rij[2]+rjl[2])/(rijmag*rjlmag)) +
-        (cosijl*((rij[2]/pow(rijmag,2.0))-(rjl[2]/(rjlmag*rjlmag))));
+        (cosijl*((rij[2]/square(rijmag))-(rjl[2]/(rjlmag*rjlmag))));
       dcosijldrl[0] = (rij[0]/(rijmag*rjlmag))+(cosijl*rjl[0]/(rjlmag*rjlmag));
       dcosijldrl[1] = (rij[1]/(rijmag*rjlmag))+(cosijl*rjl[1]/(rjlmag*rjlmag));
       dcosijldrl[2] = (rij[2]/(rijmag*rjlmag))+(cosijl*rjl[2]/(rjlmag*rjlmag));
@@ -919,18 +921,19 @@ double PairREBOMoS::gSpline(double costh, int typei, double *dgdc)
   *dgdc = 0.0;
 
   if (costh >= -1.0 && costh < 0.5){
-        g = b0[typei] + b1[typei]*costh + b2[typei]*pow(costh,2) + b3[typei]*pow(costh,3) + b4[typei]*pow(costh,4) + b5[typei]*pow(costh,5) + b6[typei]*pow(costh,6);
-        *dgdc = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*pow(costh,2) + 4*b4[typei]*pow(costh,3) + 5*b5[typei]*pow(costh,4) + 6*b6[typei]*pow(costh,5);
+        g = b0[typei] + b1[typei]*costh + b2[typei]*square(costh) + b3[typei]*cube(costh) + b4[typei]*powint(costh,4) + b5[typei]*powint(costh,5) + b6[typei]*powint(costh,6);
+
+        *dgdc = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*square(costh) + 4*b4[typei]*cube(costh) + 5*b5[typei]*powint(costh,4) + 6*b6[typei]*powint(costh,5);
         }
   else if (costh >= 0.5 && costh <= 1.0){
-        gcos = b0[typei] + b1[typei]*costh + b2[typei]*pow(costh,2) + b3[typei]*pow(costh,3) + b4[typei]*pow(costh,4) + b5[typei]*pow(costh,5) + b6[typei]*pow(costh,6);
-        dgcos = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*pow(costh,2) + 4*b4[typei]*pow(costh,3) + 5*b5[typei]*pow(costh,4) + 6*b6[typei]*pow(costh,5);
+        gcos = b0[typei] + b1[typei]*costh + b2[typei]*square(costh) + b3[typei]*cube(costh) + b4[typei]*powint(costh,4) + b5[typei]*powint(costh,5) + b6[typei]*powint(costh,6);
+        dgcos = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*square(costh) + 4*b4[typei]*cube(costh) + 5*b5[typei]*powint(costh,4) + 6*b6[typei]*powint(costh,5);
 
         psi = 0.5*(1 - cos(2*MY_PI*(costh - 0.5)));
         dpsi = MY_PI*sin(2*MY_PI*(costh - 0.5));
 
-        gamma = bg0[typei] + bg1[typei]*costh + bg2[typei]*pow(costh,2) + bg3[typei]*pow(costh,3) + bg4[typei]*pow(costh,4) + bg5[typei]*pow(costh,5) + bg6[typei]*pow(costh,6);
-        dgamma = bg1[typei] + 2*bg2[typei]*costh + 3*bg3[typei]*pow(costh,2) + 4*bg4[typei]*pow(costh,3) + 5*bg5[typei]*pow(costh,4) + 6*bg6[typei]*pow(costh,5);
+        gamma = bg0[typei] + bg1[typei]*costh + bg2[typei]*square(costh) + bg3[typei]*cube(costh) + bg4[typei]*powint(costh,4) + bg5[typei]*powint(costh,5) + bg6[typei]*powint(costh,6);
+        dgamma = bg1[typei] + 2*bg2[typei]*costh + 3*bg3[typei]*square(costh) + 4*bg4[typei]*cube(costh) + 5*bg5[typei]*powint(costh,4) + 6*bg6[typei]*powint(costh,5);
 
         g = gcos + psi*(gamma - gcos);
         *dgdc = dgcos + dpsi*(gamma - gcos) + psi*(dgamma - dgcos);
