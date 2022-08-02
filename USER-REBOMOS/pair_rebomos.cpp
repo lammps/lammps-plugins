@@ -40,15 +40,16 @@
 #include "neigh_list.h"
 #include "neigh_request.h"
 #include "neighbor.h"
+#include "potential_file_reader.h"
+#include "text_file_reader.h"
 
 #include <cmath>
-#include <cstdlib>
 #include <cstring>
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
-using MathSpecial::powint;
 using MathSpecial::cube;
+using MathSpecial::powint;
 using MathSpecial::square;
 
 #define MAXLINE 1024
@@ -1015,9 +1016,6 @@ double PairREBOMoS::PijSpline(double NM, double NS, int typei, double *dp)
 
 void PairREBOMoS::read_file(char *filename)
 {
-  int i,j,k,l,limit;
-  char s[MAXLINE];
-
   // REBO Parameters (Mo-S REBO)
 
   double rcmin_MM,rcmin_MS,rcmin_SS,rcmax_MM,rcmax_MS,rcmax_SS;
@@ -1041,154 +1039,87 @@ void PairREBOMoS::read_file(char *filename)
   // read file on proc 0
 
   if (comm->me == 0) {
-    FILE *fp = fopen(filename,"r");
-    if (fp == nullptr) {
-      char str[128];
-      sprintf(str,"Cannot open MoS-REBO potential file %s",filename);
-      error->one(FLERR,str);
-    }
-
-    // skip initial comment lines
-
-    while (1) {
-      fgets(s,MAXLINE,fp);
-      if (s[0] != '#') break;
-    }
+    PotentialFileReader reader(lmp, filename, "rebomos");
 
     // read parameters
 
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&rcmin_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&rcmin_MS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&rcmin_SS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&rcmax_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&rcmax_MS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&rcmax_SS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&Q_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&Q_MS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&Q_SS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&alpha_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&alpha_MS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&alpha_SS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&A_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&A_MS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&A_SS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&BIJc_MM1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&BIJc_MS1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&BIJc_SS1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&Beta_MM1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&Beta_MS1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&Beta_SS1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b0);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b2);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b3);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b4);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b5);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_b6);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg0);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg2);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg3);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg4);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg5);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_bg6);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b0);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b2);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b3);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b4);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b5);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_b6);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg0);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg2);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg3);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg4);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg5);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_bg6);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_a0);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_a1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_a2);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&M_a3);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_a0);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_a1);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_a2);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&S_a3);
+    std::vector<double*> params {
+      &rcmin_MM,
+      &rcmin_MS,
+      &rcmin_SS,
+      &rcmax_MM,
+      &rcmax_MS,
+      &rcmax_SS,
+      &Q_MM,
+      &Q_MS,
+      &Q_SS,
+      &alpha_MM,
+      &alpha_MS,
+      &alpha_SS,
+      &A_MM,
+      &A_MS,
+      &A_SS,
+      &BIJc_MM1,
+      &BIJc_MS1,
+      &BIJc_SS1,
+      &Beta_MM1,
+      &Beta_MS1,
+      &Beta_SS1,
+      &M_b0,
+      &M_b1,
+      &M_b2,
+      &M_b3,
+      &M_b4,
+      &M_b5,
+      &M_b6,
+      &M_bg0,
+      &M_bg1,
+      &M_bg2,
+      &M_bg3,
+      &M_bg4,
+      &M_bg5,
+      &M_bg6,
+      &S_b0,
+      &S_b1,
+      &S_b2,
+      &S_b3,
+      &S_b4,
+      &S_b5,
+      &S_b6,
+      &S_bg0,
+      &S_bg1,
+      &S_bg2,
+      &S_bg3,
+      &S_bg4,
+      &S_bg5,
+      &S_bg6,
+      &M_a0,
+      &M_a1,
+      &M_a2,
+      &M_a3,
+      &S_a0,
+      &S_a1,
+      &S_a2,
+      &S_a3,
 
-    // LJ parameters
+      // LJ parameters
+      &epsilon_MM,
+      &epsilon_SS,
+      &sigma_MM,
+      &sigma_SS,
+    };
 
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&epsilon_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&epsilon_SS);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&sigma_MM);
-    fgets(s,MAXLINE,fp);
-    sscanf(s,"%lg",&sigma_SS);
+    try {
+      for (auto &param : params) {
+        *param = reader.next_double();
+      }
+    } catch (TokenizerException &e) {
+      error->one(FLERR, "reading rebomos potential file {}\nREASON: {}\n", filename, e.what());
+    } catch (FileReaderException &fre) {
+      error->one(FLERR, "reading rebomos potential file {}\nREASON: {}\n", filename, fre.what());
+    }
 
-    fclose(fp);
-  }
-
-  // store read-in values in arrays
-
-  if (comm->me == 0) {
+    // store read-in values in arrays
 
     // REBO
 
