@@ -674,7 +674,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
   PijS = 0.0;
   dp = 0.0;
   PijS = PijSpline(NijM,NijS,itype,&dp);
-  pij = pow(1.0+Etmp+PijS,-0.5);
+  pij = 1.0/sqrt(1.0+Etmp+PijS);
   tmp = -0.5*cube(pij);
 
   // derivative calculations
@@ -802,7 +802,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
   PjiS = 0.0;
   dp = 0.0;
   PjiS = PijSpline(NjiM,NjiS,jtype,&dp);
-  pji = pow(1.0+Etmp+PjiS,-0.5);
+  pji = 1.0/sqrt(1.0+Etmp+PjiS);
   tmp = -0.5*cube(pji);
 
   REBO_neighs = REBO_firstneigh[j];
