@@ -1,6 +1,7 @@
 LAMMPS (23 Jun 2022)
 OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
   using 1 OpenMP thread(s) per MPI task
+Loaded 3 plugins from ../build-develop
 units metal
 
 lattice custom 1.0 a1  3.1903157234 0.0000000000  0.0000000000                    a2 -1.5964590311 2.7651481541  0.0000000000                    a3  0.0000000000 0.0000000000 13.9827680588                 basis  0.0000000000 0.000000000   $(3.0/4.0)                   basis  0.0000000000 0.000000000   $(1.0/4.0)                   basis  $(2.0/3.0)   $(1.0/3.0)    0.862008989                  basis  $(1.0/3.0)   $(2.0/3.0)    0.137990996                  basis  $(1.0/3.0)   $(2.0/3.0)    0.362008989                  basis  $(2.0/3.0)   $(1.0/3.0)    0.637991011                  origin 0.1 0.1 0.1
@@ -30,6 +31,7 @@ mass                    2 32.065 #S
 
 pair_style rebomos
 pair_coeff * * MoS.REBO.set5b M S
+Reading rebomos potential file MoS.REBO.set5b with DATE: 2022-08-01
 
 thermo_style custom step temp press pe ke cellgamma vol
 thermo 10
@@ -53,20 +55,20 @@ Per MPI rank memory allocation (min/avg/max) = 4.977 | 4.978 | 4.978 Mbytes
          0   0              28799.53      -2061.6112      0              113.40187      5922.4926    
         10   80.776057      13540.088     -2064.6132      2.9966028      113.40187      5922.4926    
         20   146.17503     -20669.371     -2067.0428      5.4227518      113.40187      5922.4926    
-Loop time of 0.0744514 on 4 procs for 20 steps with 288 atoms
+Loop time of 0.0488819 on 4 procs for 20 steps with 288 atoms
 
-Performance: 23.210 ns/day, 1.034 hours/ns, 268.632 timesteps/s
-99.7% CPU use with 4 MPI tasks x 1 OpenMP threads
+Performance: 35.351 ns/day, 0.679 hours/ns, 409.149 timesteps/s
+99.6% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.061057   | 0.066672   | 0.072715   |   1.6 | 89.55
+Pair    | 0.043637   | 0.045346   | 0.047342   |   0.6 | 92.77
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 0.0014678  | 0.0075023  | 0.013125   |   4.8 | 10.08
-Output  | 4.2993e-05 | 4.777e-05  | 6.0125e-05 |   0.0 |  0.06
-Modify  | 3.4868e-05 | 4.3009e-05 | 6.4568e-05 |   0.0 |  0.06
-Other   |            | 0.000186   |            |       |  0.25
+Comm    | 0.0012878  | 0.0032958  | 0.0050166  |   2.3 |  6.74
+Output  | 3.9346e-05 | 4.6707e-05 | 6.3171e-05 |   0.0 |  0.10
+Modify  | 2.322e-05  | 2.7407e-05 | 3.0797e-05 |   0.0 |  0.06
+Other   |            | 0.0001662  |            |       |  0.34
 
 Nlocal:             72 ave          72 max          72 min
 Histogram: 4 0 0 0 0 0 0 0 0 0
