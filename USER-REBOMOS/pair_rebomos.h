@@ -68,11 +68,120 @@ class PairREBOMoS : public Pair {
 
   double bondorder(int, int, double *, double, double, double **, int);
 
-  double gSpline(double, int, double *);
-  double PijSpline(double, double, int, double *);
+  inline double gSpline(const double costh, const int typei, double &dgdc) const
+  {
+    const double b0i = b0[typei];
+    const double b1i = b1[typei];
+    const double b2i = b2[typei];
+    const double b3i = b3[typei];
+    const double b4i = b4[typei];
+    const double b5i = b5[typei];
+    const double b6i = b6[typei];
+    double g = 0.0;
+
+    if (costh >= -1.0 && costh < 0.5) {
+      g = b6i * costh;
+      double dg = 6.0 * b6i * costh;
+      g += b5i;
+      dg += 5.0 * b5i;
+      g *= costh;
+      dg *= costh;
+      g += b4i;
+      dg += 4.0 * b4i;
+      g *= costh;
+      dg *= costh;
+      g += b3i;
+      dg += 3.0 * b3i;
+      g *= costh;
+      dg *= costh;
+      g += b2i;
+      dg += 2.0 * b2i;
+      g *= costh;
+      dg *= costh;
+      g += b1i;
+      dg += b1i;
+      g *= costh;
+      g += b0i;
+      dgdc = dg;
+
+    } else if (costh >= 0.5 && costh <= 1.0) {
+      double gcos = b6i * costh;
+      double dgcos = 6.0 * b6i * costh;
+      gcos += b5i;
+      dgcos += 5.0 * b5i;
+      gcos *= costh;
+      dgcos *= costh;
+      gcos += b4i;
+      dgcos += 4.0 * b4i;
+      gcos *= costh;
+      dgcos *= costh;
+      gcos += b3i;
+      dgcos += 3.0 * b3i;
+      gcos *= costh;
+      dgcos *= costh;
+      gcos += b2i;
+      dgcos += 2.0 * b2i;
+      gcos *= costh;
+      dgcos *= costh;
+      gcos += b1i;
+      dgcos += b1i;
+      gcos *= costh;
+      gcos += b0i;
+
+      const double bg0i = bg0[typei];
+      const double bg1i = bg1[typei];
+      const double bg2i = bg2[typei];
+      const double bg3i = bg3[typei];
+      const double bg4i = bg4[typei];
+      const double bg5i = bg5[typei];
+      const double bg6i = bg6[typei];
+      double gamma = bg6i * costh;
+      double dgamma = 6.0 * bg6i * costh;
+      gamma += bg5i;
+      dgamma += 5.0 * bg5i;
+      gamma *= costh;
+      dgamma *= costh;
+      gamma += bg4i;
+      dgamma += 4.0 * bg4i;
+      gamma *= costh;
+      dgamma *= costh;
+      gamma += bg3i;
+      dgamma += 3.0 * bg3i;
+      gamma *= costh;
+      dgamma *= costh;
+      gamma += bg2i;
+      dgamma += 2.0 * bg2i;
+      gamma *= costh;
+      dgamma *= costh;
+      gamma += bg1i;
+      dgamma += bg1i;
+      gamma *= costh;
+      gamma += bg0i;
+
+      const double tmp = MathConst::MY_2PI * (costh - 0.5);
+      const double psi = 0.5 * (1 - cos(tmp));
+      const double dpsi = MathConst::MY_PI * sin(tmp);
+      g = gcos + psi * (gamma - gcos);
+      dgdc = dgcos + dpsi * (gamma - gcos) + psi * (dgamma - dgcos);
+    } else {
+      dgdc = 0.0;
+    }
+    return g;
+  }
+
+  /* ----------------------------------------------------------------------
+    Pij calculation
+ ------------------------------------------------------------------------- */
+
+  inline double PijSpline(const double NM, const double NS, const int typei, double &dp) const
+  {
+    const double N = NM + NS;
+
+    dp = -a0[typei] + a1[typei] * a2[typei] * exp(-a2[typei] * N);
+    return -a0[typei] * (N - 1) - a1[typei] * exp(-a2[typei] * N) + a3[typei];
+  }
 
   void read_file(char *);
-
   void allocate();
 
   // ----------------------------------------------------------------------

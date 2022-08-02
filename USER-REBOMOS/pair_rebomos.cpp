@@ -665,14 +665,14 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
 
       // evaluate g and derivative dg
 
-      g = gSpline(cosjik,itype,&dgdc);
+      g = gSpline(cosjik,itype,dgdc);
       Etmp = Etmp+(wik*g);
     }
   }
 
   PijS = 0.0;
   dp = 0.0;
-  PijS = PijSpline(NijM,NijS,itype,&dp);
+  PijS = PijSpline(NijM,NijS,itype,dp);
   pij = 1.0/sqrt(1.0+Etmp+PijS);
   tmp = -0.5*cube(pij);
 
@@ -711,7 +711,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
       dcosjikdrj[2] = (-rik[2]/(rijmag*rikmag)) +
         (cosjik*(rij[2]/(rijmag*rijmag)));
 
-      g = gSpline(cosjik,itype,&dgdc);
+      g = gSpline(cosjik,itype,dgdc);
       tmp2 = VA*0.5*(tmp*wik*dgdc);
       fj[0] = -tmp2*dcosjikdrj[0];
       fj[1] = -tmp2*dcosjikdrj[1];
@@ -793,14 +793,14 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
 
       // evaluate g and derivative dg
 
-      g = gSpline(cosijl,jtype,&dgdc);
+      g = gSpline(cosijl,jtype,dgdc);
       Etmp = Etmp+(wjl*g);
     }
   }
 
   PjiS = 0.0;
   dp = 0.0;
-  PjiS = PijSpline(NjiM,NjiS,jtype,&dp);
+  PjiS = PijSpline(NjiM,NjiS,jtype,dp);
   pji = 1.0/sqrt(1.0+Etmp+PjiS);
   tmp = -0.5*cube(pji);
 
@@ -836,7 +836,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
 
       // evaluate g and derivatives dg
 
-      g = gSpline(cosijl,jtype,&dgdc);
+      g = gSpline(cosijl,jtype,dgdc);
       tmp2 = VA*0.5*(tmp*wjl*dgdc);
       fi[0] = -tmp2*dcosijldri[0];
       fi[1] = -tmp2*dcosijldri[1];
@@ -905,109 +905,6 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
 /* ----------------------------------------------------------------------
    G calculation
 ------------------------------------------------------------------------- */
-
-double PairREBOMoS::gSpline(double costh, int typei, double *dgdc)
-{
-  double g = 0.0;
-  *dgdc = 0.0;
-
-  if (costh >= -1.0 && costh < 0.5) {
-    g = b6[typei] * costh;
-    double dg = 6.0 * b6[typei] * costh;
-    g += b5[typei];
-    dg += 5.0*b5[typei];
-    g *= costh;
-    dg *= costh;
-    g += b4[typei];
-    dg += 4.0*b4[typei];
-    g *= costh;
-    dg *= costh;
-    g += b3[typei];
-    dg += 3.0*b3[typei];
-    g *= costh;
-    dg *= costh;
-    g += b2[typei];
-    dg += 2.0*b2[typei];
-    g *= costh;
-    dg *= costh;
-    g += b1[typei];
-    dg += b1[typei];
-    g *= costh;
-    g += b0[typei];
-    *dgdc = dg;
-
-  } else if (costh >= 0.5 && costh <= 1.0){
-    double gcos = b6[typei] * costh;
-    double dgcos = 6.0*b6[typei] * costh;
-    gcos += b5[typei];
-    dgcos += 5.0*b5[typei];
-    gcos *= costh;
-    dgcos *= costh;
-    gcos += b4[typei];
-    dgcos += 4.0*b4[typei];
-    gcos *= costh;
-    dgcos *= costh;
-    gcos += b3[typei];
-    dgcos += 3.0*b3[typei];
-    gcos *= costh;
-    dgcos *= costh;
-    gcos += b2[typei];
-    dgcos += 2.0*b2[typei];
-    gcos *= costh;
-    dgcos *= costh;
-    gcos += b1[typei];
-    dgcos += b1[typei];
-    gcos *= costh;
-    gcos += b0[typei];
-
-    const double psi = 0.5*(1 - cos(2*MY_PI*(costh - 0.5)));
-    const double dpsi = MY_PI*sin(2*MY_PI*(costh - 0.5));
-
-    double gamma = bg6[typei] * costh;
-    double dgamma = 6.0 * bg6[typei] * costh;
-    gamma += bg5[typei];
-    dgamma += 5.0*bg5[typei];
-    gamma *= costh;
-    dgamma *= costh;
-    gamma += bg4[typei];
-    dgamma += 4.0*bg4[typei];
-    gamma *= costh;
-    dgamma *= costh;
-    gamma += bg3[typei];
-    dgamma += 3.0*bg3[typei];
-    gamma *= costh;
-    dgamma *= costh;
-    gamma += bg2[typei];
-    dgamma += 2.0*bg2[typei];
-    gamma *= costh;
-    dgamma *= costh;
-    gamma += bg1[typei];
-    dgamma += bg1[typei];
-    gamma *= costh;
-    gamma += bg0[typei];
-    g = gcos + psi*(gamma - gcos);
-    *dgdc = dgcos + dpsi*(gamma - gcos) + psi*(dgamma - dgcos);
-  }
-  return g;
-}
-
-/* ----------------------------------------------------------------------
-   Pij calculation
-------------------------------------------------------------------------- */
-
-double PairREBOMoS::PijSpline(double NM, double NS, int typei, double *dp)
-{
-  double Pij;
-  double N;
-
-  N = NM + NS;
-  *dp = 0.0;
-
-  Pij = -a0[typei]*(N - 1) - a1[typei]*exp(-a2[typei]*N) + a3[typei];
-  *dp = -a0[typei] + a1[typei]*a2[typei]*exp(-a2[typei]*N);
-
-  return Pij;
-}
 
 /* ----------------------------------------------------------------------
    read REBO potential file
