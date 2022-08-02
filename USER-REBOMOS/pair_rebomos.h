@@ -38,12 +38,7 @@ class PairREBOMoS : public Pair {
   double memory_usage() override;
 
  protected:
-  int **pages;    // neighbor list pages
   int ljflag;
-  int maxlocal;    // size of numneigh, firstneigh arrays
-  int maxpage;     // # of pages currently allocated
-  int pgsize;      // size of neighbor page
-  int oneatom;     // max # of neighbors for one atom
 
   double cutlj;          // user-specified LJ cutoff
   double cutljrebosq;    // cut for when to compute
@@ -53,6 +48,10 @@ class PairREBOMoS : public Pair {
   double **lj1, **lj2, **lj3, **lj4;    // pre-computed LJ coeffs for M,S types
   double cut3rebo;                      // maximum distance for 3rd REBO neigh
 
+  int maxlocal;             // size of numneigh, firstneigh arrays
+  int pgsize;               // size of neighbor page
+  int oneatom;              // max # of neighbors for one atom
+  MyPage<int> *ipage;       // neighbor list pages
   int *REBO_numneigh;       // # of pair neighbors for each atom
   int **REBO_firstneigh;    // ptr to 1st neighbor of each atom
 
@@ -76,7 +75,6 @@ class PairREBOMoS : public Pair {
   double gSpline(double, int, double *);
   double PijSpline(double, double, int, double *);
 
-  void add_pages(int howmany = 1);
   void read_file(char *);
 
   void allocate();

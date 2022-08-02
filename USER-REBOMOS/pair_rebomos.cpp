@@ -28,6 +28,7 @@
 // clang-format on
 
 #include "pair_rebomos.h"
+
 #include "atom.h"
 #include "comm.h"
 #include "error.h"
@@ -35,6 +36,7 @@
 #include "math_const.h"
 #include "math_special.h"
 #include "memory.h"
+#include "my_page.h"
 #include "neigh_list.h"
 #include "neigh_request.h"
 #include "neighbor.h"
@@ -45,12 +47,11 @@
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
+using MathSpecial::powint;
 
 #define MAXLINE 1024
 #define TOL 1.0e-9
 #define PGDELTA 1
-
-// clang-format off
 
 /* ---------------------------------------------------------------------- */
 
@@ -66,10 +67,12 @@ PairREBOMoS::PairREBOMoS(LAMMPS *lmp) : Pair(lmp)
   maxlocal = 0;
   REBO_numneigh = nullptr;
   REBO_firstneigh = nullptr;
-  maxpage = 0;
-  pages = nullptr;
+  ipage = nullptr;
+  pgsize = oneatom = 0;
   nM = nS = nullptr;
 }
+
+// clang-format off
 
 /* ----------------------------------------------------------------------
    Check if allocated, since class can be destructed when incomplete
@@ -79,8 +82,7 @@ PairREBOMoS::~PairREBOMoS()
 {
   memory->destroy(REBO_numneigh);
   memory->sfree(REBO_firstneigh);
-  for (int i = 0; i < maxpage; i++) memory->destroy(pages[i]);
-  memory->sfree(pages);
+  delete[] ipage;
   memory->destroy(nM);
   memory->destroy(nS);
 
@@ -94,7 +96,6 @@ PairREBOMoS::~PairREBOMoS()
     memory->destroy(lj2);
     memory->destroy(lj3);
     memory->destroy(lj4);
-    delete [] map;
   }
 }
 
@@ -102,8 +103,7 @@ PairREBOMoS::~PairREBOMoS()
 
 void PairREBOMoS::compute(int eflag, int vflag)
 {
-  if (eflag || vflag) ev_setup(eflag,vflag);
-  else evflag = vflag_fdotr = vflag_atom = 0;
+  ev_init(eflag,vflag);
 
   REBO_neigh();
   FREBO(eflag,vflag);
@@ -168,14 +168,16 @@ void PairREBOMoS::coeff(int narg, char **arg)
   if (strcmp(arg[0],"*") != 0 || strcmp(arg[1],"*") != 0)
     error->all(FLERR,"Incorrect args for pair coefficients");
 
-  // read args that map atom types to M and S
+  // read args that map atom types to Mo and S
   // map[i] = which element (0,1) the Ith atom type is, -1 if NULL
 
   for (int i = 3; i < narg; i++) {
     if (strcmp(arg[i],"NULL") == 0) {
       map[i-2] = -1;
       continue;
-    } else if (strcmp(arg[i],"M") == 0) {
+    } else if (strcmp(arg[i],"Mo") == 0) {
+      map[i-2] = 0;
+    } else if (strcmp(arg[i],"M") == 0) { // backward compatibility
       map[i-2] = 0;
     } else if (strcmp(arg[i],"S") == 0) {
       map[i-2] = 1;
@@ -213,19 +215,32 @@ void PairREBOMoS::coeff(int narg, char **arg)
 void PairREBOMoS::init_style()
 {
   if (atom->tag_enable == 0)
-    error->all(FLERR,"Pair style Mo-S REBO requires atom IDs");
+    error->all(FLERR,"Pair style REBOMoS requires atom IDs");
   if (force->newton_pair == 0)
-    error->all(FLERR,"Pair style Mo-S REBO requires newton pair on");
+    error->all(FLERR,"Pair style REBOMoS requires newton pair on");
 
   // need a full neighbor list, including neighbors of ghosts
 
   neighbor->add_request(this,NeighConst::REQ_FULL|NeighConst::REQ_GHOST);
 
-  // local REBO neighbor list memory
+  // local REBO neighbor list
+  // create pages if first time or if neighbor pgsize/oneatom has changed
 
-  pgsize = neighbor->pgsize;
-  oneatom = neighbor->oneatom;
-  if (maxpage == 0) add_pages();
+  int create = 0;
+  if (ipage == nullptr) create = 1;
+  if (pgsize != neighbor->pgsize) create = 1;
+  if (oneatom != neighbor->oneatom) create = 1;
+
+  if (create) {
+    delete[] ipage;
+    pgsize = neighbor->pgsize;
+    oneatom = neighbor->oneatom;
+
+    int nmypage= comm->nthreads;
+    ipage = new MyPage<int>[nmypage];
+    for (int i = 0; i < nmypage; i++)
+      ipage[i].init(oneatom,pgsize,PGDELTA);
+  }
 }
 
 /* ----------------------------------------------------------------------
@@ -236,12 +251,12 @@ double PairREBOMoS::init_one(int i, int j)
 {
   if (setflag[i][j] == 0) error->all(FLERR,"All pair coeffs are not set");
 
-  // convert to M,S types
+  // convert to Mo,S types
 
   int ii = map[i];
   int jj = map[j];
 
-  // use M-M values for these cutoffs since M atoms are biggest
+  // use Mo-Mo values for these cutoffs since M atoms are biggest
 
   // cut3rebo = 3 REBO distances
 
@@ -276,10 +291,10 @@ double PairREBOMoS::init_one(int i, int j)
 
   cutghost[i][j] = rcmax[ii][jj];
   cutljsq[ii][jj] = cutlj*sigma[ii][jj] * cutlj*sigma[ii][jj];
-  lj1[ii][jj] = 48.0 * epsilon[ii][jj] * pow(sigma[ii][jj],12.0);
-  lj2[ii][jj] = 24.0 * epsilon[ii][jj] * pow(sigma[ii][jj],6.0);
-  lj3[ii][jj] = 4.0 * epsilon[ii][jj] * pow(sigma[ii][jj],12.0);
-  lj4[ii][jj] = 4.0 * epsilon[ii][jj] * pow(sigma[ii][jj],6.0);
+  lj1[ii][jj] = 48.0 * epsilon[ii][jj] * powint(sigma[ii][jj],12);
+  lj2[ii][jj] = 24.0 * epsilon[ii][jj] * powint(sigma[ii][jj],6);
+  lj3[ii][jj] = 4.0 * epsilon[ii][jj] * powint(sigma[ii][jj],12);
+  lj4[ii][jj] = 4.0 * epsilon[ii][jj] * powint(sigma[ii][jj],6);
 
   cutghost[j][i] = cutghost[i][j];
   cutljsq[jj][ii] = cutljsq[ii][jj];
@@ -305,8 +320,6 @@ void PairREBOMoS::REBO_neigh()
 
   double **x = atom->x;
   int *type = atom->type;
-  int nlocal = atom->nlocal;
-  int nall = nlocal + atom->nghost;
 
   if (atom->nmax > maxlocal) {
     maxlocal = atom->nmax;
@@ -314,11 +327,11 @@ void PairREBOMoS::REBO_neigh()
     memory->sfree(REBO_firstneigh);
     memory->destroy(nM);
     memory->destroy(nS);
-    memory->create(REBO_numneigh,maxlocal,"rebomos:numneigh");
+    memory->create(REBO_numneigh,maxlocal,"REBOMoS:numneigh");
     REBO_firstneigh = (int **) memory->smalloc(maxlocal*sizeof(int *),
-                                               "rebomos:firstneigh");
-    memory->create(nM,maxlocal,"rebomos:nM");
-    memory->create(nS,maxlocal,"rebomos:nS");
+                                               "REBOMoS:firstneigh");
+    memory->create(nM,maxlocal,"REBOMoS:nM");
+    memory->create(nS,maxlocal,"REBOMoS:nS");
   }
 
   allnum = list->inum + list->gnum;
@@ -329,19 +342,13 @@ void PairREBOMoS::REBO_neigh()
   // store all REBO neighs of owned and ghost atoms
   // scan full neighbor list of I
 
-  int npage = 0;
-  int npnt = 0;
+  ipage->reset();
 
   for (ii = 0; ii < allnum; ii++) {
     i = ilist[ii];
 
-    if (pgsize - npnt < oneatom) {
-      npnt = 0;
-      npage++;
-      if (npage == maxpage) add_pages();
-    }
-    neighptr = &pages[npage][npnt];
     n = 0;
+    neighptr = ipage->vget();
 
     xtmp = x[i][0];
     ytmp = x[i][1];
@@ -371,10 +378,9 @@ void PairREBOMoS::REBO_neigh()
 
     REBO_firstneigh[i] = neighptr;
     REBO_numneigh[i] = n;
-    npnt += n;
-    if (npnt >= pgsize)
-      error->one(FLERR,
-                 "Neighbor list overflow, boost neigh_modify one or page");
+    ipage->vgot(n);
+    if (ipage->status())
+      error->one(FLERR,"Neighbor list overflow, boost neigh_modify one");
   }
 }
 
@@ -384,7 +390,8 @@ void PairREBOMoS::REBO_neigh()
 
 void PairREBOMoS::FREBO(int eflag, int vflag)
 {
-  int i,j,k,m,ii,inum,itype,jtype,itag,jtag;
+  int i,j,k,m,ii,inum,itype,jtype;
+  tagint itag, jtag;
   double delx,dely,delz,evdwl,fpair,xtmp,ytmp,ztmp;
   double rsq,rij,wij;
   double Qij,Aij,alphaij,VR,pre,dVRdi,VA,term,bij,dVAdi,dVA;
@@ -396,7 +403,7 @@ void PairREBOMoS::FREBO(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   int *type = atom->type;
-  int *tag = atom->tag;
+  tagint *tag = atom->tag;
   int nlocal = atom->nlocal;
   int newton_pair = force->newton_pair;
 
@@ -480,9 +487,10 @@ void PairREBOMoS::FREBO(int eflag, int vflag)
 
 void PairREBOMoS::FLJ(int eflag, int vflag)
 {
-  int i,j,k,m,ii,jj,kk,mm,inum,jnum,itype,jtype,ktype,mtype,itag,jtag;
-  int atomi,atomj,atomk,atomm;   
-  double evdwl,fpair,xtmp,ytmp,ztmp;          
+  int i,j,k,m,ii,jj,kk,mm,inum,jnum,itype,jtype,ktype,mtype;
+  int atomi,atomj,atomk,atomm;
+  tagint itag,jtag;
+  double evdwl,fpair,xtmp,ytmp,ztmp;
   double rsq,best,wik,wkm,cij,rij,dwij,dwik,dwkj,dwkm,dwmj;
   double delij[3],rijsq,delik[3],rik,deljk[3];
   double rkj,wkj,dC,VLJ,dVLJ,VA;
@@ -498,26 +506,26 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
   double c2,c3,dr,drp,r6;
 
   // I-J interaction from full neighbor list
-  // skip 1/2 of interactions since only consider each pair once              
+  // skip 1/2 of interactions since only consider each pair once
 
   evdwl = 0.0;
-  rljmin = 0.0;                          
-  rljmax = 0.0;            
-  sigcut = 0.0;     
-  sigmin = 0.0;     
-  sigwid = 0.0;     
+  rljmin = 0.0;
+  rljmax = 0.0;
+  sigcut = 0.0;
+  sigmin = 0.0;
+  sigwid = 0.0;
 
 
   double **x = atom->x;
-  double **f = atom->f;            
-  int *tag = atom->tag;     
-  int *type = atom->type;   
+  double **f = atom->f;
+  tagint *tag = atom->tag;
+  int *type = atom->type;
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair; 
+  int newton_pair = force->newton_pair;
 
-  inum = list->inum;                        
+  inum = list->inum;
   ilist = list->ilist;
-  numneigh = list->numneigh;         
+  numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
   // loop over neighbors of my atoms
@@ -560,13 +568,13 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
 
       // Outside Rmax
       if (rij > rcLJmax[itype][jtype] || rij < rcLJmin[itype][jtype]){
-          VLJ = 0;            
-          dVLJ = 0;                 
+          VLJ = 0;
+          dVLJ = 0;
       }
 
       // Inside Rmax and above 0.95*sigma
       else if (rij <= rcLJmax[itype][jtype] && rij >= 0.95*sigma[itype][jtype]){
-              r2inv = 1.0/rijsq;           
+              r2inv = 1.0/rijsq;
               r6inv = r2inv*r2inv*r2inv;
               VLJ = r6inv*(lj3[itype][jtype]*r6inv-lj4[itype][jtype]);
               dVLJ = -r6inv*(lj1[itype][jtype]*r6inv - lj2[itype][jtype])/rij;
@@ -617,15 +625,15 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
                               double VA,double **f, int vflag_atom)
 {
   int atomi,atomj,atomk,atoml;
-  int k,n,l;                 
-  int itype, jtype, ktype, ltype;                 
-  double rik[3], rjl[3], rji[3], rki[3],rlj[3], wji, dwjl, bij;        
+  int k,n,l;
+  int itype, jtype, ktype, ltype;
+  double rik[3], rjl[3], rji[3], rki[3],rlj[3], wji, dwjl, bij;
   double NijM,NijS,NjiM,NjiS,wik,dwik,wjl;
   double rikmag,rjlmag,cosjik,cosijl,g,tmp2;
   double Etmp,pij,tmp,wij,dwij,dS;
   double dgdc,pji;
   double dcosjikdri[3],dcosijldri[3],dcosjikdrk[3];
-  double dp, Nlj;             
+  double dp, Nlj;
   double dcosjikdrj[3],dcosijldrj[3],dcosijldrl[3];
   double rjk[3], ril[3];
   double fi[3],fj[3],fk[3],fl[3];
@@ -961,21 +969,6 @@ double PairREBOMoS::PijSpline(double NM, double NS, int typei, double *dp)
 }
 
 /* ----------------------------------------------------------------------
-   add pages to REBO neighbor list
-------------------------------------------------------------------------- */
-
-void PairREBOMoS::add_pages(int howmany)
-{
-  int toppage = maxpage;
-  maxpage += howmany*PGDELTA;
-
-  pages = (int **)
-    memory->srealloc(pages,maxpage*sizeof(int *),"rebomos:pages");
-  for (int i = toppage; i < maxpage; i++)
-    memory->create(pages[i],pgsize,"rebomos:pages[i]");
-}
-
-/* ----------------------------------------------------------------------
    read REBO potential file
 ------------------------------------------------------------------------- */
 
@@ -1305,7 +1298,7 @@ void PairREBOMoS::read_file(char *filename)
 
   MPI_Bcast(&rcLJmin[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&rcLJmax[0][0],4,MPI_DOUBLE,0,world);
-  MPI_Bcast(&rcLJmaxsq[0][0],4,MPI_DOUBLE,0,world); 
+  MPI_Bcast(&rcLJmaxsq[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&epsilon[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&sigma[0][0],4,MPI_DOUBLE,0,world);
 }
@@ -1317,9 +1310,12 @@ void PairREBOMoS::read_file(char *filename)
 double PairREBOMoS::memory_usage()
 {
   double bytes = 0.0;
-  bytes += maxlocal * sizeof(int);
-  bytes += maxlocal * sizeof(int *);
-  bytes += maxpage * neighbor->pgsize * sizeof(int);
-  bytes += 3 * maxlocal * sizeof(double);
+  bytes += (double)maxlocal * sizeof(int);
+  bytes += (double)maxlocal * sizeof(int *);
+
+  for (int i = 0; i < comm->nthreads; i++)
+    bytes += ipage[i].size();
+
+  bytes += 3.0 * maxlocal * sizeof(double);
   return bytes;
 }
