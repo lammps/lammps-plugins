@@ -1,7 +1,7 @@
 // clang-format off
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
-   http://lammps.sandia.gov, Sandia National Laboratories
+   https://www.lammps.org/, Sandia National Laboratories
    Steve Plimpton, sjplimp@sandia.gov
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
@@ -1004,11 +1004,9 @@ void PairREBOMoS::read_file(char *filename)
   double epsilon_MM,epsilon_MS,epsilon_SS;
   double sigma_MM,sigma_MS,sigma_SS;
 
-  MPI_Comm_rank(world,&me);
-
   // read file on proc 0
 
-  if (me == 0) {
+  if (comm->me == 0) {
     FILE *fp = fopen(filename,"r");
     if (fp == nullptr) {
       char str[128];
@@ -1156,7 +1154,7 @@ void PairREBOMoS::read_file(char *filename)
 
   // store read-in values in arrays
 
-  if (me == 0) {
+  if (comm->me == 0) {
 
     // REBO
 

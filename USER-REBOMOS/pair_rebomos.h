@@ -39,9 +39,6 @@ class PairREBOMoS : public Pair {
 
  protected:
   int **pages;    // neighbor list pages
-  int *map;       // 0 (M), 1 (S), or -1 (NULL) for each type
-
-  int me;
   int ljflag;
   int maxlocal;    // size of numneigh, firstneigh arrays
   int maxpage;     // # of pages currently allocated
@@ -58,6 +55,7 @@ class PairREBOMoS : public Pair {
 
   int *REBO_numneigh;       // # of pair neighbors for each atom
   int **REBO_firstneigh;    // ptr to 1st neighbor of each atom
+
   double *closestdistsq;    // closest owned atom dist to each ghost
   double *nM, *nS;          // sum of weighting fns with REBO neighs
 
