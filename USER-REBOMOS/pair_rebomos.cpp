@@ -908,38 +908,87 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
 
 double PairREBOMoS::gSpline(double costh, int typei, double *dgdc)
 {
-  double g, gcos, psi, gamma;
-  double dgcos, dpsi, dgamma;
-
-  g = 0.0;
-  psi = 0.0;
-  gamma = 0.0;
-  gcos = 0.0;
-  dgcos   = 0.0;
-  dpsi = 0.0;
-  dgamma = 0.0;
+  double g = 0.0;
   *dgdc = 0.0;
 
-  if (costh >= -1.0 && costh < 0.5){
-        g = b0[typei] + b1[typei]*costh + b2[typei]*square(costh) + b3[typei]*cube(costh) + b4[typei]*powint(costh,4) + b5[typei]*powint(costh,5) + b6[typei]*powint(costh,6);
+  if (costh >= -1.0 && costh < 0.5) {
+    g = b6[typei] * costh;
+    double dg = 6.0 * b6[typei] * costh;
+    g += b5[typei];
+    dg += 5.0*b5[typei];
+    g *= costh;
+    dg *= costh;
+    g += b4[typei];
+    dg += 4.0*b4[typei];
+    g *= costh;
+    dg *= costh;
+    g += b3[typei];
+    dg += 3.0*b3[typei];
+    g *= costh;
+    dg *= costh;
+    g += b2[typei];
+    dg += 2.0*b2[typei];
+    g *= costh;
+    dg *= costh;
+    g += b1[typei];
+    dg += b1[typei];
+    g *= costh;
+    g += b0[typei];
+    *dgdc = dg;
 
-        *dgdc = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*square(costh) + 4*b4[typei]*cube(costh) + 5*b5[typei]*powint(costh,4) + 6*b6[typei]*powint(costh,5);
-        }
-  else if (costh >= 0.5 && costh <= 1.0){
-        gcos = b0[typei] + b1[typei]*costh + b2[typei]*square(costh) + b3[typei]*cube(costh) + b4[typei]*powint(costh,4) + b5[typei]*powint(costh,5) + b6[typei]*powint(costh,6);
-        dgcos = b1[typei] + 2*b2[typei]*costh + 3*b3[typei]*square(costh) + 4*b4[typei]*cube(costh) + 5*b5[typei]*powint(costh,4) + 6*b6[typei]*powint(costh,5);
+  } else if (costh >= 0.5 && costh <= 1.0){
+    double gcos = b6[typei] * costh;
+    double dgcos = 6.0*b6[typei] * costh;
+    gcos += b5[typei];
+    dgcos += 5.0*b5[typei];
+    gcos *= costh;
+    dgcos *= costh;
+    gcos += b4[typei];
+    dgcos += 4.0*b4[typei];
+    gcos *= costh;
+    dgcos *= costh;
+    gcos += b3[typei];
+    dgcos += 3.0*b3[typei];
+    gcos *= costh;
+    dgcos *= costh;
+    gcos += b2[typei];
+    dgcos += 2.0*b2[typei];
+    gcos *= costh;
+    dgcos *= costh;
+    gcos += b1[typei];
+    dgcos += b1[typei];
+    gcos *= costh;
+    gcos += b0[typei];
 
-        psi = 0.5*(1 - cos(2*MY_PI*(costh - 0.5)));
-        dpsi = MY_PI*sin(2*MY_PI*(costh - 0.5));
+    const double psi = 0.5*(1 - cos(2*MY_PI*(costh - 0.5)));
+    const double dpsi = MY_PI*sin(2*MY_PI*(costh - 0.5));
 
-        gamma = bg0[typei] + bg1[typei]*costh + bg2[typei]*square(costh) + bg3[typei]*cube(costh) + bg4[typei]*powint(costh,4) + bg5[typei]*powint(costh,5) + bg6[typei]*powint(costh,6);
-        dgamma = bg1[typei] + 2*bg2[typei]*costh + 3*bg3[typei]*square(costh) + 4*bg4[typei]*cube(costh) + 5*bg5[typei]*powint(costh,4) + 6*bg6[typei]*powint(costh,5);
-
-        g = gcos + psi*(gamma - gcos);
-        *dgdc = dgcos + dpsi*(gamma - gcos) + psi*(dgamma - dgcos);
-        }
-
-return g;
+    double gamma = bg6[typei] * costh;
+    double dgamma = 6.0 * bg6[typei] * costh;
+    gamma += bg5[typei];
+    dgamma += 5.0*bg5[typei];
+    gamma *= costh;
+    dgamma *= costh;
+    gamma += bg4[typei];
+    dgamma += 4.0*bg4[typei];
+    gamma *= costh;
+    dgamma *= costh;
+    gamma += bg3[typei];
+    dgamma += 3.0*bg3[typei];
+    gamma *= costh;
+    dgamma *= costh;
+    gamma += bg2[typei];
+    dgamma += 2.0*bg2[typei];
+    gamma *= costh;
+    dgamma *= costh;
+    gamma += bg1[typei];
+    dgamma += bg1[typei];
+    gamma *= costh;
+    gamma += bg0[typei];
+    g = gcos + psi*(gamma - gcos);
+    *dgdc = dgcos + dpsi*(gamma - gcos) + psi*(dgamma - dgcos);
+  }
+  return g;
 }
 
 /* ----------------------------------------------------------------------
