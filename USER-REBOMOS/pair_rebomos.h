@@ -38,13 +38,9 @@ class PairREBOMoS : public Pair {
   double memory_usage() override;
 
  protected:
-  int ljflag;
-
-  double cutlj;          // user-specified LJ cutoff
   double cutljrebosq;    // cut for when to compute
                          // REBO neighs of ghost atoms
 
-  double **cutljsq;                     // LJ cutoffs for M,S types
   double **lj1, **lj2, **lj3, **lj4;    // pre-computed LJ coeffs for M,S types
   double cut3rebo;                      // maximum distance for 3rd REBO neigh
 

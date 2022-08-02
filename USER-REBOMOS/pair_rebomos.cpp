@@ -91,7 +91,6 @@ PairREBOMoS::~PairREBOMoS()
     memory->destroy(cutsq);
     memory->destroy(cutghost);
 
-    memory->destroy(cutljsq);
     memory->destroy(lj1);
     memory->destroy(lj2);
     memory->destroy(lj3);
@@ -107,7 +106,7 @@ void PairREBOMoS::compute(int eflag, int vflag)
 
   REBO_neigh();
   FREBO(eflag,vflag);
-  if (ljflag) FLJ(eflag,vflag);
+  FLJ(eflag,vflag);
 
   if (vflag_fdotr) virial_fdotr_compute();
 }
@@ -131,7 +130,6 @@ void PairREBOMoS::allocate()
 
   // only sized by M,S = 2 types
 
-  memory->create(cutljsq,2,2,"pair:cutljsq");
   memory->create(lj1,2,2,"pair:lj1");
   memory->create(lj2,2,2,"pair:lj2");
   memory->create(lj3,2,2,"pair:lj3");
@@ -147,9 +145,6 @@ void PairREBOMoS::allocate()
 void PairREBOMoS::settings(int narg, char **arg)
 {
   if (narg != 0) error->all(FLERR,"Illegal pair_style command");
-
-  cutlj = 0;
-  ljflag = 1;
 }
 
 /* ----------------------------------------------------------------------
@@ -283,21 +278,15 @@ double PairREBOMoS::init_one(int i, int j)
   //   cutlj*sigma, since I-J < LJ cutoff
   // cutghost = REBO cutoff used in REBO_neigh() for neighbors of ghosts
 
-  double cutmax = cut3rebo;
-  if (ljflag) {
-    cutmax = MAX(cutmax,rcLJmax[0][0] + 2.0*rcmax[0][0]);
-    cutmax = MAX(cutmax,cutlj*sigma[0][0]);
-  }
+  double cutmax = MAX(cut3rebo,rcLJmax[0][0] + 2.0*rcmax[0][0]);
 
   cutghost[i][j] = rcmax[ii][jj];
-  cutljsq[ii][jj] = cutlj*sigma[ii][jj] * cutlj*sigma[ii][jj];
   lj1[ii][jj] = 48.0 * epsilon[ii][jj] * powint(sigma[ii][jj],12);
   lj2[ii][jj] = 24.0 * epsilon[ii][jj] * powint(sigma[ii][jj],6);
   lj3[ii][jj] = 4.0 * epsilon[ii][jj] * powint(sigma[ii][jj],12);
   lj4[ii][jj] = 4.0 * epsilon[ii][jj] * powint(sigma[ii][jj],6);
 
   cutghost[j][i] = cutghost[i][j];
-  cutljsq[jj][ii] = cutljsq[ii][jj];
   lj1[jj][ii] = lj1[ii][jj];
   lj2[jj][ii] = lj2[ii][jj];
   lj3[jj][ii] = lj3[ii][jj];
