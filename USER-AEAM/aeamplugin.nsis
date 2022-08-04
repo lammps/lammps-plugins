@@ -31,11 +31,11 @@ ${If} $0 != "admin"
 ${EndIf}
 !macroend
 
-!define PACEPLUGIN "LAMMPS USER-AEAM Plugin ${VERSION}"
+!define AEAMPLUGIN "LAMMPS USER-AEAM Plugin ${VERSION}"
 OutFile "LAMMPS-USER-AEAM-plugin-${VERSION}.exe"
 
-Name "${PACEPLUGIN}"
-InstallDir "$LOCALAPPDATA\${PACEPLUGIN}"
+Name "${AEAMPLUGIN}"
+InstallDir "$LOCALAPPDATA\${AEAMPLUGIN}"
 
 ShowInstDetails show
 ShowUninstDetails show
@@ -80,7 +80,7 @@ function .onInit
   setShellVarContext all
 functionEnd
 
-Section "${PACEPLUGIN}" SecPaceplugin
+Section "${AEAMPLUGIN}" SecPaceplugin
   SectionIn RO
   # Write LAMMPS installation bitness marker. Always use 32-bit registry view
   SetRegView 32
@@ -97,9 +97,9 @@ Section "${PACEPLUGIN}" SecPaceplugin
 
   # Register Application and its uninstaller
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-AEAM" \
-                 "DisplayName" "${PACEPLUGIN}"
+                 "DisplayName" "${AEAMPLUGIN}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-AEAM" \
-                 "Publisher" "The LAMMPS and PACE Developers"
+                 "Publisher" "The LAMMPS and USER-AEAM Developers"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-AEAM" \
                  "URLInfoAbout" "lammps.org"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-AEAM" \

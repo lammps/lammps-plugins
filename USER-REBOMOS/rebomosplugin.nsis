@@ -31,11 +31,11 @@ ${If} $0 != "admin"
 ${EndIf}
 !macroend
 
-!define PACEPLUGIN "LAMMPS USER-REBOMOS Plugin ${VERSION}"
+!define REBOMOSPLUGIN "LAMMPS USER-REBOMOS Plugin ${VERSION}"
 OutFile "LAMMPS-USER-REBOMOS-plugin-${VERSION}.exe"
 
-Name "${PACEPLUGIN}"
-InstallDir "$LOCALAPPDATA\${PACEPLUGIN}"
+Name "${REBOMOSPLUGIN}"
+InstallDir "$LOCALAPPDATA\${REBOMOSPLUGIN}"
 
 ShowInstDetails show
 ShowUninstDetails show
@@ -80,7 +80,7 @@ function .onInit
   setShellVarContext all
 functionEnd
 
-Section "${PACEPLUGIN}" SecPaceplugin
+Section "${REBOMOSPLUGIN}" SecPaceplugin
   SectionIn RO
   # Write LAMMPS installation bitness marker. Always use 32-bit registry view
   SetRegView 32
@@ -97,9 +97,9 @@ Section "${PACEPLUGIN}" SecPaceplugin
 
   # Register Application and its uninstaller
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-REBOMOS" \
-                 "DisplayName" "${PACEPLUGIN}"
+                 "DisplayName" "${REBOMOSPLUGIN}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-REBOMOS" \
-                 "Publisher" "The LAMMPS and PACE Developers"
+                 "Publisher" "The LAMMPS and USER-REBOMOS Developers"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-REBOMOS" \
                  "URLInfoAbout" "lammps.org"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-REBOMOS" \

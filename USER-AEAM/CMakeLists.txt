@@ -49,13 +49,14 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     endif()
     if(BUILD_MPI)
       add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI aeamplugin.nsis
-        DEPENDS aeamplugin
-        BYPRODUCTS LAMMPS-USER-AEAM-plugin-${LAMMPS_VERSION}-MPI.exe)
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DEPENDS aeamplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/aeamplugin.nsis
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-AEAM-plugin-${LAMMPS_VERSION}-MPI.exe)
     else()
       add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION} aeamplugin.nsis
-        COMMAND ${CMAKE_COMMAND} -E echo ${PWD}
-        DEPENDS aeamplugin lammps.ico lammps-text-logo-wide.bmp aeamplugin.nsis
-        BYPRODUCTS LAMMPS-USER-AEAM-plugin-${LAMMPS_VERSION}.exe)
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DEPENDS aeamplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/aeamplugin.nsis
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-AEAM-plugin-${LAMMPS_VERSION}.exe)
     endif()
   endif()
 else()
