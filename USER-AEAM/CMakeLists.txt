@@ -48,7 +48,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
       set(mytarget package)
     endif()
     if(BUILD_MPI)
-      if(USE_MSMPI)
+      if(USE_MSMPI AND CMAKE_CROSSCOMPILING)
         add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MSMPI aeamplugin.nsis
           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
           DEPENDS aeamplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/aeamplugin.nsis
