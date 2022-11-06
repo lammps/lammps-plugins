@@ -48,10 +48,17 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
       set(mytarget package)
     endif()
     if(BUILD_MPI)
-      add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI rebomosplugin.nsis
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS rebomosplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/aeamplugin.nsis
-        BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-REBOMOS-plugin-${LAMMPS_VERSION}-MPI.exe)
+      if(USE_MSMPI AND CMAKE_CROSSCOMPILING)
+        add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MSMPI rebomosplugin.nsis
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          DEPENDS rebomosplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/rebomosplugin.nsis
+          BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-REBOMOS-plugin-${LAMMPS_VERSION}-MSMPI.exe)
+      else()
+        add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI rebomosplugin.nsis
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          DEPENDS rebomosplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/rebomosplugin.nsis
+          BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-REBOMOS-plugin-${LAMMPS_VERSION}-MPI.exe)
+      endif()
     else()
       add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION} rebomosplugin.nsis
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

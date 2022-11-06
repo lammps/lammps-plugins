@@ -50,10 +50,17 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
       set(mytarget package)
     endif()
     if(BUILD_MPI)
-      add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI vcsgcplugin.nsis
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS vcsgcplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/aeamplugin.nsis
-        BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-VCSGC-plugin-${LAMMPS_VERSION}-MPI.exe)
+      if(USE_MSMPI AND CMAKE_CROSSCOMPILING)
+          add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MSMPI vcsgcplugin.nsis
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          DEPENDS vcsgcplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/vcsgcplugin.nsis
+          BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-VCSGC-plugin-${LAMMPS_VERSION}-MSMPI.exe)
+      else()
+        add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI vcsgcplugin.nsis
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          DEPENDS vcsgcplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/vcsgcplugin.nsis
+          BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-VCSGC-plugin-${LAMMPS_VERSION}-MPI.exe)
+      endif()
     else()
       add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION} vcsgcplugin.nsis
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
