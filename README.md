@@ -7,7 +7,10 @@ for a number of reasons, but ported to be compatible with the
 |--------------|----------------------------------------------------|
 | USER-AEAM    | https://github.com/psaidi/AEAM                     |
 | USER-REBOMOS | https://matsci.org/t/pair-rebomos/30503            |
-| USER-VCSGC   | https://gitlab.com/materials-modeling/vcsgc-lammps |
+
+As of the 22 December 2022 LAMMPS release, the USER-VCSGC package
+code has been merged with upstream and the corresponding fix is now
+available in the MC package. The plugin package has thus been removed.
 
 To compile and configure all plugins
 
