@@ -50,7 +50,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if(BUILD_MPI)
       add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION}-MPI rebomosplugin.nsis
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS rebomosplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/aeamplugin.nsis
+        DEPENDS rebomosplugin ${CMAKE_BINARY_DIR}/lammps.ico ${CMAKE_BINARY_DIR}/lammps-text-logo-wide.bmp ${CMAKE_BINARY_DIR}/rebomosplugin.nsis
         BYPRODUCTS ${CMAKE_BINARY_DIR}/LAMMPS-USER-REBOMOS-plugin-${LAMMPS_VERSION}-MPI.exe)
     else()
       add_custom_target(${mytarget} ${MAKENSIS_PATH} -V1 -DVERSION=${LAMMPS_VERSION} rebomosplugin.nsis
