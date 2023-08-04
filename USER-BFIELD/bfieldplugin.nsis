@@ -31,11 +31,11 @@ ${If} $0 != "admin"
 ${EndIf}
 !macroend
 
-!define VCSGCPLUGIN "LAMMPS USER-VCSGC Plugin ${VERSION}"
-OutFile "LAMMPS-USER-VCSGC-plugin-${VERSION}.exe"
+!define BFIELDPLUGIN "LAMMPS USER-BFIELD Plugin ${VERSION}"
+OutFile "LAMMPS-USER-BFIELD-plugin-${VERSION}.exe"
 
-Name "${VCSGCPLUGIN}"
-InstallDir "$LOCALAPPDATA\${VCSGCPLUGIN}"
+Name "${BFIELDPLUGIN}"
+InstallDir "$LOCALAPPDATA\${BFIELDPLUGIN}"
 
 ShowInstDetails show
 ShowUninstDetails show
@@ -55,7 +55,7 @@ function .onInit
   # Determine if LAMMPS was already installed and check whether it was in 32-bit
   # or 64-bit. Then look up path to uninstaller and offer to uninstall or quit
   SetRegView 32
-  ReadRegDWORD $0 HKCU "Software\LAMMPS-USER-VCSGC" "Bits"
+  ReadRegDWORD $0 HKCU "Software\LAMMPS-USER-BFIELD" "Bits"
   SetRegView LastUsed
   ${If} $0 == "32"
     SetRegView 32
@@ -65,12 +65,12 @@ function .onInit
     SetRegView 64
   ${EndIf}
   ClearErrors
-  ReadRegStr $R0 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" "UninstallString"
+  ReadRegStr $R0 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" "UninstallString"
   SetRegView LastUsed
   ${If} ${Errors}
-    DetailPrint "LAMMPS USER-VCSGC plugin not (yet) installed"
+    DetailPrint "LAMMPS USER-BFIELD plugin not (yet) installed"
   ${Else}
-    MessageBox MB_YESNO "LAMMPS USER-VCSGC plugin ($0 bit) is already installed. Uninstall existing version?" /SD IDYES IDNO Quit
+    MessageBox MB_YESNO "LAMMPS USER-BFIELD plugin ($0 bit) is already installed. Uninstall existing version?" /SD IDYES IDNO Quit
       Pop $R1
       StrCmp $R1 2 Quit +1
       Exec $R0
@@ -80,12 +80,12 @@ function .onInit
   setShellVarContext all
 functionEnd
 
-Section "${VCSGCPLUGIN}" SecVcsgcplugin
+Section "${BFIELDPLUGIN}" SecPaceplugin
   SectionIn RO
   # Write LAMMPS installation bitness marker. Always use 32-bit registry view
   SetRegView 32
   IntFmt $0 "0x%08X" 64
-  WriteRegDWORD HKCU "Software\LAMMPS-USER-VCSGC" "Bits" $0
+  WriteRegDWORD HKCU "Software\LAMMPS-USER-BFIELD" "Bits" $0
 
   # Switch to "native" registry view
   SetRegView 64
@@ -93,29 +93,29 @@ Section "${VCSGCPLUGIN}" SecVcsgcplugin
 
   SetOutPath "$INSTDIR"
   File lammps.ico
-  File vcsgcplugin.so
+  File bfieldplugin.so
 
   # Register Application and its uninstaller
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
-                 "DisplayName" "${VCSGCPLUGIN}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
-                 "Publisher" "The LAMMPS and USER-VCSGC Developers"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
-                 "URLInfoAbout" "vcsgc-lammps.materialsmodeling.org"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
+                 "DisplayName" "${BFIELDPLUGIN}"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
+                 "Publisher" "The LAMMPS and USER-BFIELD Developers"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
+                 "URLInfoAbout" "lammps.org"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
                  "DisplayIcon" "$INSTDIR\lammps.ico"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
                  "DisplayVersion" "${VERSION}"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
                  "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
                  "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
                  "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
 
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
-  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC" \
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD" \
                  "EstimatedSize" "$0"
 
   # update path variables
@@ -133,20 +133,20 @@ functionEnd
 Section "Uninstall"
   # remove LAMMPS bitness/installation indicator always in 32-bit registry view
   SetRegView 32
-  DeleteRegKey HKCU "Software\LAMMPS-USER-VCSGC"
+  DeleteRegKey HKCU "Software\LAMMPS-USER-BFIELD"
 
   # unregister extension, and uninstall info
   SetRegView 64
   SetShellVarContext current
   # unregister installation
-  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-VCSGC"
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LAMMPS-USER-BFIELD"
 
   # update path variables
   EnVar::SetHKCU
   # remove entry from LAMMPS plugin search path
   EnVar::DeleteValue "LAMMPS_PLUGIN_PATH" "$INSTDIR"
 
-  Delete /REBOOTOK "$INSTDIR\vcsgcplugin.so"
+  Delete /REBOOTOK "$INSTDIR\bfieldplugin.so"
   Delete /REBOOTOK "$INSTDIR\Uninstall.exe"
   Delete /REBOOTOK "$INSTDIR\lammps.ico"
   RMDir /REBOOTOK "$INSTDIR"
