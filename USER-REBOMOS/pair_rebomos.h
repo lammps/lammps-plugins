@@ -63,8 +63,8 @@ class PairREBOMoS : public Pair {
   double epsilon[2][2], sigma[2][2];
 
   void REBO_neigh();
-  void FREBO(int, int);
-  void FLJ(int, int);
+  void FREBO(int);
+  void FLJ(int);
 
   double bondorder(int, int, double *, double, double, double **, int);
 
