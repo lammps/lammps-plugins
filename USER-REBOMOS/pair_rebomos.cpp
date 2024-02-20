@@ -1139,13 +1139,13 @@ void PairREBOMoS::read_file(char *filename)
   MPI_Bcast(&a2[0],2,MPI_DOUBLE,0,world);
   MPI_Bcast(&a3[0],2,MPI_DOUBLE,0,world);
 
-  MPI_Bcast(&bg0[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg1[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg2[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg3[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg4[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg5[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg6[0],1,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg0[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg1[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg2[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg3[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg4[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg5[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg6[0],2,MPI_DOUBLE,0,world);
 
   MPI_Bcast(&rcLJmin[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&rcLJmax[0][0],4,MPI_DOUBLE,0,world);
