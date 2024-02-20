@@ -733,7 +733,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
       f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
       f[atomk][0] += fk[0]; f[atomk][1] += fk[1]; f[atomk][2] += fk[2];
 
-      if (vflag_atom) {
+      if (vflag_either) {
         rji[0] = -rij[0]; rji[1] = -rij[1]; rji[2] = -rij[2];
         rki[0] = -rik[0]; rki[1] = -rik[1]; rki[2] = -rik[2];
         v_tally3(atomi,atomj,atomk,fj,fk,rji,rki);
@@ -741,20 +741,17 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
     }
   }
 
-///////////////////////////////
   // PIJ force contribution additional term
-  tmp2 = VA*0.5*(tmp*dp*dwij)/rijmag;
-  fi[0] = -tmp2*rij[0];
-  fi[1] = -tmp2*rij[1];
-  fi[2] = -tmp2*rij[2];
-  fj[0] = tmp2*rij[0];
-  fj[1] = tmp2*rij[1];
-  fj[2] = tmp2*rij[2];
+  tmp2 = -VA*0.5*(tmp*dp*dwij)/rijmag;
 
-  f[atomi][0] += fi[0]; f[atomi][1] += fi[1]; f[atomi][2] += fi[2];
-  f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
-  // TODO: add vtally2() call?
-///////////////////////////////
+  f[atomi][0] += rij[0]*tmp;
+  f[atomi][1] += rij[1]*tmp;
+  f[atomi][2] += rij[2]*tmp;
+  f[atomj][0] -= rij[0]*tmp;
+  f[atomj][1] -= rij[1]*tmp;
+  f[atomj][2] -= rij[2]*tmp;
+
+  if (vflag_either) v_tally2(atomi,atomj,tmp2,rij);
 
   tmp = 0.0;
   tmp2 = 0.0;
@@ -859,28 +856,24 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
       f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
       f[atoml][0] += fl[0]; f[atoml][1] += fl[1]; f[atoml][2] += fl[2];
 
-      if (vflag_atom) {
+      if (vflag_either) {
         rlj[0] = -rjl[0]; rlj[1] = -rjl[1]; rlj[2] = -rjl[2];
         v_tally3(atomi,atomj,atoml,fi,fl,rij,rlj);
       }
     }
   }
 
-///////////////////////////////
   // PIJ force contribution additional term
-  tmp2 = VA*0.5*(tmp*dp*dwij)/rijmag;
-  fj[0] = -tmp2*(-rij[0]);
-  fj[1] = -tmp2*(-rij[1]);
-  fj[2] = -tmp2*(-rij[2]);
-  fi[0] = tmp2*(-rij[0]);
-  fi[1] = tmp2*(-rij[1]);
-  fi[2] = tmp2*(-rij[2]);
 
-  // summing over force contributions
-  f[atomi][0] += fi[0]; f[atomi][1] += fi[1]; f[atomi][2] += fi[2];
-  f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
-  // TODO: add vtally2() call?
-//////////////////////////////
+  tmp2 = -VA*0.5*(tmp*dp*dwij)/rijmag;
+  f[atomi][0] += rij[0]*tmp;
+  f[atomi][1] += rij[1]*tmp;
+  f[atomi][2] += rij[2]*tmp;
+  f[atomj][0] -= rij[0]*tmp;
+  f[atomj][1] -= rij[1]*tmp;
+  f[atomj][2] -= rij[2]*tmp;
+
+  if (vflag_either) v_tally2(atomi,atomj,tmp2,rij);
 
   bij = (0.5*(pij+pji));
   return bij;
