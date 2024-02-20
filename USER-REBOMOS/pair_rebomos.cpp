@@ -466,8 +466,7 @@ void PairREBOMoS::FREBO(int eflag)
       f[j][2] -= delz*fpair;
 
       if (eflag) evdwl = VR + bij*VA;
-      if (evflag) ev_tally(i,j,nlocal,newton_pair,
-                           evdwl,0.0,fpair,delx,dely,delz);
+      if (evflag) ev_tally(i,j,nlocal,newton_pair,evdwl,0.0,fpair,delx,dely,delz);
     }
   }
 }
@@ -652,7 +651,6 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
     }
   }
 
-  PijS = 0.0;
   dp = 0.0;
   PijS = PijSpline(NijM,NijS,itype,dp);
   pij = 1.0/sqrt(1.0+Etmp+PijS);
@@ -778,7 +776,6 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
     }
   }
 
-  PjiS = 0.0;
   dp = 0.0;
   PjiS = PijSpline(NjiM,NjiS,jtype,dp);
   pji = 1.0/sqrt(1.0+Etmp+PjiS);
