@@ -742,12 +742,12 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
   // PIJ force contribution additional term
   tmp2 = -VA*0.5*(tmp*dp*dwij)/rijmag;
 
-  f[atomi][0] += rij[0]*tmp;
-  f[atomi][1] += rij[1]*tmp;
-  f[atomi][2] += rij[2]*tmp;
-  f[atomj][0] -= rij[0]*tmp;
-  f[atomj][1] -= rij[1]*tmp;
-  f[atomj][2] -= rij[2]*tmp;
+  f[atomi][0] += rij[0]*tmp2;
+  f[atomi][1] += rij[1]*tmp2;
+  f[atomi][2] += rij[2]*tmp2;
+  f[atomj][0] -= rij[0]*tmp2;
+  f[atomj][1] -= rij[1]*tmp2;
+  f[atomj][2] -= rij[2]*tmp2;
 
   if (vflag_either) v_tally2(atomi,atomj,tmp2,rij);
 
@@ -863,12 +863,12 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
   // PIJ force contribution additional term
 
   tmp2 = -VA*0.5*(tmp*dp*dwij)/rijmag;
-  f[atomi][0] += rij[0]*tmp;
-  f[atomi][1] += rij[1]*tmp;
-  f[atomi][2] += rij[2]*tmp;
-  f[atomj][0] -= rij[0]*tmp;
-  f[atomj][1] -= rij[1]*tmp;
-  f[atomj][2] -= rij[2]*tmp;
+  f[atomi][0] += rij[0]*tmp2;
+  f[atomi][1] += rij[1]*tmp2;
+  f[atomi][2] += rij[2]*tmp2;
+  f[atomj][0] -= rij[0]*tmp2;
+  f[atomj][1] -= rij[1]*tmp2;
+  f[atomj][2] -= rij[2]*tmp2;
 
   if (vflag_either) v_tally2(atomi,atomj,tmp2,rij);
 
