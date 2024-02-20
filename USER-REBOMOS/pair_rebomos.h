@@ -66,7 +66,7 @@ class PairREBOMoS : public Pair {
   void FREBO(int);
   void FLJ(int);
 
-  double bondorder(int, int, double *, double, double, double **, int);
+  double bondorder(int, int, double *, double, double, double **);
 
   inline double gSpline(const double costh, const int typei, double &dgdc) const
   {

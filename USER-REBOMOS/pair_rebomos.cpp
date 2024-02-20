@@ -454,7 +454,7 @@ void PairREBOMoS::FREBO(int eflag)
       del[0] = delx;
       del[1] = dely;
       del[2] = delz;
-      bij = bondorder(i,j,del,rij,VA,f,vflag_atom);
+      bij = bondorder(i,j,del,rij,VA,f);
       dVAdi = bij*dVA;
 
       fpair = -(dVRdi+dVAdi) / rij;
@@ -596,8 +596,7 @@ void PairREBOMoS::FLJ(int eflag)
    derivatives are also computed for use in the force calculation.
 ------------------------------------------------------------------------- */
 
-double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
-                              double VA,double **f, int vflag_atom)
+double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double VA, double **f)
 {
   int atomi,atomj,atomk,atoml;
   int k,l;
