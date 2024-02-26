@@ -2,7 +2,7 @@
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   LAMMPS Development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -33,7 +33,6 @@
 #include "comm.h"
 #include "error.h"
 #include "force.h"
-#include "math_const.h"
 #include "math_special.h"
 #include "memory.h"
 #include "my_page.h"
@@ -46,14 +45,12 @@
 #include <cstring>
 
 using namespace LAMMPS_NS;
-using namespace MathConst;
 using MathSpecial::cube;
 using MathSpecial::powint;
 using MathSpecial::square;
 
-#define MAXLINE 1024
-#define TOL 1.0e-9
-#define PGDELTA 1
+static constexpr double TOL = 1.0e-9;
+static constexpr int PGDELTA = 1;
 
 /* ---------------------------------------------------------------------- */
 
@@ -259,28 +256,7 @@ double PairREBOMoS::init_one(int i, int j)
 
   cut3rebo = 3.0 * rcmax[0][0];
 
-  // cutljrebosq = furthest distance from an owned atom a ghost atom can be
-  //               to need its REBO neighs computed
-  // interaction = M-K-I-J-L-N with I = owned and J = ghost
-  //   this insures N is in the REBO neigh list of L
-  //   since I-J < rcLJmax and J-L < rmax
-
-  double cutljrebo = rcLJmax[0][0] + rcmax[0][0];
-  cutljrebosq = cutljrebo * cutljrebo;
-
-  // cutmax = furthest distance from an owned atom
-  //          at which another atom will feel force, i.e. the ghost cutoff
-  // for REBO term in potential:
-  //   interaction = M-K-I-J-L-N with I = owned and J = ghost
-  //   I to N is max distance = 3 REBO distances
-  // for LJ term in potential:
-  //   short interaction = M-K-I-J-L-N with I = owned, J = ghost, I-J < rcLJmax
-  //   rcLJmax + 2*rcmax, since I-J < rcLJmax and J-L,L-N = REBO distances
-  //   long interaction = I-J with I = owned and J = ghost
-  //   cutlj*sigma, since I-J < LJ cutoff
   // cutghost = REBO cutoff used in REBO_neigh() for neighbors of ghosts
-
-  double cutmax = MAX(cut3rebo,rcLJmax[0][0] + 2.0*rcmax[0][0]);
 
   cutghost[i][j] = rcmax[ii][jj];
   lj1[ii][jj] = 48.0 * epsilon[ii][jj] * powint(sigma[ii][jj],12);
@@ -294,7 +270,7 @@ double PairREBOMoS::init_one(int i, int j)
   lj3[jj][ii] = lj3[ii][jj];
   lj4[jj][ii] = lj4[ii][jj];
 
-  return cutmax;
+  return cut3rebo;
 }
 
 /* ----------------------------------------------------------------------
@@ -396,7 +372,6 @@ void PairREBOMoS::FREBO(int eflag)
   int *type = atom->type;
   tagint *tag = atom->tag;
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair;
 
   inum = list->inum;
   ilist = list->ilist;
@@ -466,7 +441,7 @@ void PairREBOMoS::FREBO(int eflag)
       f[j][2] -= delz*fpair;
 
       if (eflag) evdwl = VR + bij*VA;
-      if (evflag) ev_tally(i,j,nlocal,newton_pair,evdwl,0.0,fpair,delx,dely,delz);
+      if (evflag) ev_tally(i,j,nlocal,/*newton_pair*/1,evdwl,0.0,fpair,delx,dely,delz);
     }
   }
 }
@@ -497,7 +472,6 @@ void PairREBOMoS::FLJ(int eflag)
   tagint *tag = atom->tag;
   int *type = atom->type;
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair;
 
   inum = list->inum;
   ilist = list->ilist;
@@ -577,8 +551,7 @@ void PairREBOMoS::FLJ(int eflag)
       f[j][2] -= delij[2]*fpair;
 
       if (eflag) evdwl = VLJ;
-      if (evflag) ev_tally(i,j,nlocal,newton_pair,
-                           evdwl,0.0,fpair,delij[0],delij[1],delij[2]);
+      if (evflag) ev_tally(i,j,nlocal,/*newton_pair*/1,evdwl,0.0,fpair,delij[0],delij[1],delij[2]);
 
     }
   }
@@ -795,12 +768,9 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double
       cosijl = MIN(cosijl,1.0);
       cosijl = MAX(cosijl,-1.0);
 
-      dcosijldri[0] = (-rjl[0]/(rijmag*rjlmag)) -
-        (cosijl*rij[0]/(rijmag*rijmag));
-      dcosijldri[1] = (-rjl[1]/(rijmag*rjlmag)) -
-        (cosijl*rij[1]/(rijmag*rijmag));
-      dcosijldri[2] = (-rjl[2]/(rijmag*rjlmag)) -
-        (cosijl*rij[2]/(rijmag*rijmag));
+      dcosijldri[0] = (-rjl[0]/(rijmag*rjlmag)) - (cosijl*rij[0]/(rijmag*rijmag));
+      dcosijldri[1] = (-rjl[1]/(rijmag*rjlmag)) - (cosijl*rij[1]/(rijmag*rijmag));
+      dcosijldri[2] = (-rjl[2]/(rijmag*rjlmag)) - (cosijl*rij[2]/(rijmag*rijmag));
       dcosijldrj[0] = ((-rij[0]+rjl[0])/(rijmag*rjlmag)) +
         (cosijl*((rij[0]/square(rijmag))-(rjl[0]/(rjlmag*rjlmag))));
       dcosijldrj[1] = ((-rij[1]+rjl[1])/(rijmag*rjlmag)) +

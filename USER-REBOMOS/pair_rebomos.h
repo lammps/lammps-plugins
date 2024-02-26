@@ -1,7 +1,7 @@
 /* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   LAMMPS Development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -20,8 +20,9 @@ PairStyle(rebomos,PairREBOMoS);
 #ifndef LMP_PAIR_REBOMOS_H
 #define LMP_PAIR_REBOMOS_H
 
-#include "math_const.h"
 #include "pair.h"
+#include "math_const.h"
+
 #include <cmath>
 
 namespace LAMMPS_NS {
