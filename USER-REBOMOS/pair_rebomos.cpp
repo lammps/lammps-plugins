@@ -2,7 +2,7 @@
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   LAMMPS Development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -19,7 +19,7 @@
    Stewart J A and Spearot D E (2013) Atomistic simulations of nanoindentation on the basal plane of crystalline molybdenum disulfide. Modelling Simul. Mater. Sci. Eng. 21.
 
    Based on:
-   Liang T, Phillpot S R and Sinnott S B (2009) Parameterization of a reactive many-body potential for Mo–S systems. Phys. Rev. B79 245110.
+   Liang T, Phillpot S R and Sinnott S B (2009) Parameterization of a reactive many-body potential for Mo2S systems. Phys. Rev. B79 245110.
    Liang T, Phillpot S R and Sinnott S B (2012) Erratum: Parameterization of a reactive many-body potential for Mo-S systems. (Phys. Rev. B79 245110 (2009)) Phys. Rev. B85 199903(E).
 
    LAMMPS file contributing authors: James Stewart, Khanh Dang and Douglas Spearot (University of Arkansas)
@@ -33,7 +33,6 @@
 #include "comm.h"
 #include "error.h"
 #include "force.h"
-#include "math_const.h"
 #include "math_special.h"
 #include "memory.h"
 #include "my_page.h"
@@ -46,14 +45,12 @@
 #include <cstring>
 
 using namespace LAMMPS_NS;
-using namespace MathConst;
 using MathSpecial::cube;
 using MathSpecial::powint;
 using MathSpecial::square;
 
-#define MAXLINE 1024
-#define TOL 1.0e-9
-#define PGDELTA 1
+static constexpr double TOL = 1.0e-9;
+static constexpr int PGDELTA = 1;
 
 /* ---------------------------------------------------------------------- */
 
@@ -107,8 +104,8 @@ void PairREBOMoS::compute(int eflag, int vflag)
   ev_init(eflag,vflag);
 
   REBO_neigh();
-  FREBO(eflag,vflag);
-  FLJ(eflag,vflag);
+  FREBO(eflag);
+  FLJ(eflag);
 
   if (vflag_fdotr) virial_fdotr_compute();
 }
@@ -144,7 +141,7 @@ void PairREBOMoS::allocate()
    global settings
 ------------------------------------------------------------------------- */
 
-void PairREBOMoS::settings(int narg, char **arg)
+void PairREBOMoS::settings(int narg, char ** /* arg */)
 {
   if (narg != 0) error->all(FLERR,"Illegal pair_style command");
 }
@@ -259,28 +256,7 @@ double PairREBOMoS::init_one(int i, int j)
 
   cut3rebo = 3.0 * rcmax[0][0];
 
-  // cutljrebosq = furthest distance from an owned atom a ghost atom can be
-  //               to need its REBO neighs computed
-  // interaction = M-K-I-J-L-N with I = owned and J = ghost
-  //   this insures N is in the REBO neigh list of L
-  //   since I-J < rcLJmax and J-L < rmax
-
-  double cutljrebo = rcLJmax[0][0] + rcmax[0][0];
-  cutljrebosq = cutljrebo * cutljrebo;
-
-  // cutmax = furthest distance from an owned atom
-  //          at which another atom will feel force, i.e. the ghost cutoff
-  // for REBO term in potential:
-  //   interaction = M-K-I-J-L-N with I = owned and J = ghost
-  //   I to N is max distance = 3 REBO distances
-  // for LJ term in potential:
-  //   short interaction = M-K-I-J-L-N with I = owned, J = ghost, I-J < rcLJmax
-  //   rcLJmax + 2*rcmax, since I-J < rcLJmax and J-L,L-N = REBO distances
-  //   long interaction = I-J with I = owned and J = ghost
-  //   cutlj*sigma, since I-J < LJ cutoff
   // cutghost = REBO cutoff used in REBO_neigh() for neighbors of ghosts
-
-  double cutmax = MAX(cut3rebo,rcLJmax[0][0] + 2.0*rcmax[0][0]);
 
   cutghost[i][j] = rcmax[ii][jj];
   lj1[ii][jj] = 48.0 * epsilon[ii][jj] * powint(sigma[ii][jj],12);
@@ -294,7 +270,7 @@ double PairREBOMoS::init_one(int i, int j)
   lj3[jj][ii] = lj3[ii][jj];
   lj4[jj][ii] = lj4[ii][jj];
 
-  return cutmax;
+  return cut3rebo;
 }
 
 /* ----------------------------------------------------------------------
@@ -379,13 +355,13 @@ void PairREBOMoS::REBO_neigh()
    REBO forces and energy
 ------------------------------------------------------------------------- */
 
-void PairREBOMoS::FREBO(int eflag, int vflag)
+void PairREBOMoS::FREBO(int eflag)
 {
-  int i,j,k,m,ii,inum,itype,jtype;
+  int i,j,k,ii,inum,itype,jtype;
   tagint itag, jtag;
   double delx,dely,delz,evdwl,fpair,xtmp,ytmp,ztmp;
   double rsq,rij,wij;
-  double Qij,Aij,alphaij,VR,pre,dVRdi,VA,term,bij,dVAdi,dVA;
+  double Qij,Aij,alphaij,VR,pre,dVRdi,VA,bij,dVAdi,dVA;
   double dwij,del[3];
   int *ilist,*REBO_neighs;
 
@@ -396,7 +372,6 @@ void PairREBOMoS::FREBO(int eflag, int vflag)
   int *type = atom->type;
   tagint *tag = atom->tag;
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair;
 
   inum = list->inum;
   ilist = list->ilist;
@@ -454,7 +429,7 @@ void PairREBOMoS::FREBO(int eflag, int vflag)
       del[0] = delx;
       del[1] = dely;
       del[2] = delz;
-      bij = bondorder(i,j,del,rij,VA,f,vflag_atom);
+      bij = bondorder(i,j,del,rij,VA,f);
       dVAdi = bij*dVA;
 
       fpair = -(dVRdi+dVAdi) / rij;
@@ -466,8 +441,7 @@ void PairREBOMoS::FREBO(int eflag, int vflag)
       f[j][2] -= delz*fpair;
 
       if (eflag) evdwl = VR + bij*VA;
-      if (evflag) ev_tally(i,j,nlocal,newton_pair,
-                           evdwl,0.0,fpair,delx,dely,delz);
+      if (evflag) ev_tally(i,j,nlocal,/*newton_pair*/1,evdwl,0.0,fpair,delx,dely,delz);
     }
   }
 }
@@ -476,43 +450,28 @@ void PairREBOMoS::FREBO(int eflag, int vflag)
    compute LJ forces and energy
 ------------------------------------------------------------------------- */
 
-void PairREBOMoS::FLJ(int eflag, int vflag)
+void PairREBOMoS::FLJ(int eflag)
 {
-  int i,j,k,m,ii,jj,kk,mm,inum,jnum,itype,jtype,ktype,mtype;
-  int atomi,atomj,atomk,atomm;
+  int i,j,ii,jj,inum,jnum,itype,jtype;
   tagint itag,jtag;
   double evdwl,fpair,xtmp,ytmp,ztmp;
-  double rsq,best,wik,wkm,cij,rij,dwij,dwik,dwkj,dwkm,dwmj;
-  double delij[3],rijsq,delik[3],rik,deljk[3];
-  double rkj,wkj,dC,VLJ,dVLJ,VA;
-  double vdw,slw,dvdw,dslw,drij;
-  double rljmin,rljmax,sigcut,sigmin,sigwid;
-  double delkm[3],rkm,deljm[3],rmj,wmj,r2inv,r6inv,scale,delscale[3];
+  double rij,delij[3],rijsq;
+  double VLJ,dVLJ;
+  double vdw,dvdw;
+  double r2inv,r6inv;
   int *ilist,*jlist,*numneigh,**firstneigh;
-  int *REBO_neighs_i,*REBO_neighs_k;
-  double delikS[3],deljkS[3],delkmS[3],deljmS[3],delimS[3];
-  double rikS,rkjS,rkmS,rmjS,wikS,dwikS;
-  double wkjS,dwkjS,wkmS,dwkmS,wmjS,dwmjS;
-  double fi[3],fj[3],fk[3],fm[3];
   double c2,c3,dr,drp,r6;
 
   // I-J interaction from full neighbor list
   // skip 1/2 of interactions since only consider each pair once
 
   evdwl = 0.0;
-  rljmin = 0.0;
-  rljmax = 0.0;
-  sigcut = 0.0;
-  sigmin = 0.0;
-  sigwid = 0.0;
-
 
   double **x = atom->x;
   double **f = atom->f;
   tagint *tag = atom->tag;
   int *type = atom->type;
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair;
 
   inum = list->inum;
   ilist = list->ilist;
@@ -525,7 +484,6 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
     i = ilist[ii];
     itag = tag[i];
     itype = map[type[i]];
-    atomi = i;
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
@@ -547,7 +505,6 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
         if (x[j][2] == ztmp && x[j][1] == ytmp && x[j][0] < xtmp) continue;
       }
       jtype = map[type[j]];
-      atomj = j;
 
       delij[0] = xtmp - x[j][0];
       delij[1] = ytmp - x[j][1];
@@ -594,8 +551,7 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
       f[j][2] -= delij[2]*fpair;
 
       if (eflag) evdwl = VLJ;
-      if (evflag) ev_tally(i,j,nlocal,newton_pair,
-                           evdwl,0.0,fpair,delij[0],delij[1],delij[2]);
+      if (evflag) ev_tally(i,j,nlocal,/*newton_pair*/1,evdwl,0.0,fpair,delij[0],delij[1],delij[2]);
 
     }
   }
@@ -612,24 +568,22 @@ void PairREBOMoS::FLJ(int eflag, int vflag)
    derivatives are also computed for use in the force calculation.
 ------------------------------------------------------------------------- */
 
-double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
-                              double VA,double **f, int vflag_atom)
+double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag, double VA, double **f)
 {
   int atomi,atomj,atomk,atoml;
-  int k,n,l;
+  int k,l;
   int itype, jtype, ktype, ltype;
-  double rik[3], rjl[3], rji[3], rki[3],rlj[3], wji, dwjl, bij;
+  double rik[3], rjl[3], rji[3], rki[3],rlj[3], dwjl, bij;
   double NijM,NijS,NjiM,NjiS,wik,dwik,wjl;
   double rikmag,rjlmag,cosjik,cosijl,g,tmp2;
-  double Etmp,pij,tmp,wij,dwij,dS;
+  double Etmp,pij,tmp,dwij,dS;
   double dgdc,pji;
   double dcosjikdri[3],dcosijldri[3],dcosjikdrk[3];
-  double dp, Nlj;
+  double dp;
   double dcosjikdrj[3],dcosijldrj[3],dcosijldrl[3];
-  double rjk[3], ril[3];
   double fi[3],fj[3],fk[3],fl[3];
   double PijS, PjiS;
-  int *REBO_neighs,*REBO_neighs_i,*REBO_neighs_j,*REBO_neighs_k,*REBO_neighs_l;
+  int *REBO_neighs;
 
   double **x = atom->x;
   int *type = atom->type;
@@ -638,7 +592,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
   atomj = j;
   itype = map[type[i]];
   jtype = map[type[j]];
-  wij = Sp(rijmag,rcmin[itype][jtype],rcmax[itype][jtype],dwij);
+  Sp(rijmag,rcmin[itype][jtype],rcmax[itype][jtype],dwij);
   NijM = nM[i];
   NijS = nS[i];
   NjiM = nM[j];
@@ -670,7 +624,6 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
     }
   }
 
-  PijS = 0.0;
   dp = 0.0;
   PijS = PijSpline(NijM,NijS,itype,dp);
   pij = 1.0/sqrt(1.0+Etmp+PijS);
@@ -751,7 +704,7 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
       f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
       f[atomk][0] += fk[0]; f[atomk][1] += fk[1]; f[atomk][2] += fk[2];
 
-      if (vflag_atom) {
+      if (vflag_either) {
         rji[0] = -rij[0]; rji[1] = -rij[1]; rji[2] = -rij[2];
         rki[0] = -rik[0]; rki[1] = -rik[1]; rki[2] = -rik[2];
         v_tally3(atomi,atomj,atomk,fj,fk,rji,rki);
@@ -759,19 +712,17 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
     }
   }
 
-///////////////////////////////
-      // PIJ force contribution additional term
-      tmp2 = VA*0.5*(tmp*dp*dwij)/rijmag;
-      fi[0] = -tmp2*rij[0];
-      fi[1] = -tmp2*rij[1];
-      fi[2] = -tmp2*rij[2];
-      fj[0] = tmp2*rij[0];
-      fj[1] = tmp2*rij[1];
-      fj[2] = tmp2*rij[2];
+  // PIJ force contribution additional term
+  tmp2 = -VA*0.5*(tmp*dp*dwij)/rijmag;
 
-      f[atomi][0] += fi[0]; f[atomi][1] += fi[1]; f[atomi][2] += fi[2];
-      f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
-///////////////////////////////
+  f[atomi][0] += rij[0]*tmp2;
+  f[atomi][1] += rij[1]*tmp2;
+  f[atomi][2] += rij[2]*tmp2;
+  f[atomj][0] -= rij[0]*tmp2;
+  f[atomj][1] -= rij[1]*tmp2;
+  f[atomj][2] -= rij[2]*tmp2;
+
+  if (vflag_either) v_tally2(atomi,atomj,tmp2,rij);
 
   tmp = 0.0;
   tmp2 = 0.0;
@@ -798,7 +749,6 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
     }
   }
 
-  PjiS = 0.0;
   dp = 0.0;
   PjiS = PijSpline(NjiM,NjiS,jtype,dp);
   pji = 1.0/sqrt(1.0+Etmp+PjiS);
@@ -818,12 +768,9 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
       cosijl = MIN(cosijl,1.0);
       cosijl = MAX(cosijl,-1.0);
 
-      dcosijldri[0] = (-rjl[0]/(rijmag*rjlmag)) -
-        (cosijl*rij[0]/(rijmag*rijmag));
-      dcosijldri[1] = (-rjl[1]/(rijmag*rjlmag)) -
-        (cosijl*rij[1]/(rijmag*rijmag));
-      dcosijldri[2] = (-rjl[2]/(rijmag*rjlmag)) -
-        (cosijl*rij[2]/(rijmag*rijmag));
+      dcosijldri[0] = (-rjl[0]/(rijmag*rjlmag)) - (cosijl*rij[0]/(rijmag*rijmag));
+      dcosijldri[1] = (-rjl[1]/(rijmag*rjlmag)) - (cosijl*rij[1]/(rijmag*rijmag));
+      dcosijldri[2] = (-rjl[2]/(rijmag*rjlmag)) - (cosijl*rij[2]/(rijmag*rijmag));
       dcosijldrj[0] = ((-rij[0]+rjl[0])/(rijmag*rjlmag)) +
         (cosijl*((rij[0]/square(rijmag))-(rjl[0]/(rjlmag*rjlmag))));
       dcosijldrj[1] = ((-rij[1]+rjl[1])/(rijmag*rjlmag)) +
@@ -876,27 +823,24 @@ double PairREBOMoS::bondorder(int i, int j, double rij[3], double rijmag,
       f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
       f[atoml][0] += fl[0]; f[atoml][1] += fl[1]; f[atoml][2] += fl[2];
 
-      if (vflag_atom) {
+      if (vflag_either) {
         rlj[0] = -rjl[0]; rlj[1] = -rjl[1]; rlj[2] = -rjl[2];
         v_tally3(atomi,atomj,atoml,fi,fl,rij,rlj);
       }
     }
   }
 
-///////////////////////////////
-      // PIJ force contribution additional term
-      tmp2 = VA*0.5*(tmp*dp*dwij)/rijmag;
-      fj[0] = -tmp2*(-rij[0]);
-      fj[1] = -tmp2*(-rij[1]);
-      fj[2] = -tmp2*(-rij[2]);
-      fi[0] = tmp2*(-rij[0]);
-      fi[1] = tmp2*(-rij[1]);
-      fi[2] = tmp2*(-rij[2]);
+  // PIJ force contribution additional term
 
-      // summing over force contributions
-      f[atomi][0] += fi[0]; f[atomi][1] += fi[1]; f[atomi][2] += fi[2];
-      f[atomj][0] += fj[0]; f[atomj][1] += fj[1]; f[atomj][2] += fj[2];
-//////////////////////////////
+  tmp2 = -VA*0.5*(tmp*dp*dwij)/rijmag;
+  f[atomi][0] += rij[0]*tmp2;
+  f[atomi][1] += rij[1]*tmp2;
+  f[atomi][2] += rij[2]*tmp2;
+  f[atomj][0] -= rij[0]*tmp2;
+  f[atomj][1] -= rij[1]*tmp2;
+  f[atomj][2] -= rij[2]*tmp2;
+
+  if (vflag_either) v_tally2(atomi,atomj,tmp2,rij);
 
   bij = (0.5*(pij+pji));
   return bij;
@@ -915,7 +859,6 @@ void PairREBOMoS::read_file(char *filename)
   // REBO Parameters (Mo-S REBO)
 
   double rcmin_MM,rcmin_MS,rcmin_SS,rcmax_MM,rcmax_MS,rcmax_SS;
-  double rcmaxp_MM,rcmaxp_MS,rcmaxp_SS;
   double Q_MM,Q_MS,Q_SS,alpha_MM,alpha_MS,alpha_SS,A_MM,A_MS,A_SS;
   double BIJc_MM1,BIJc_MS1,BIJc_SS1;
   double Beta_MM1,Beta_MS1,Beta_SS1;
@@ -928,9 +871,8 @@ void PairREBOMoS::read_file(char *filename)
 
   // LJ Parameters (Mo-S REBO)
 
-  double rcLJmin_MM,rcLJmin_MS,rcLJmin_SS,rcLJmax_MM,rcLJmax_MS,rcLJmax_SS;
-  double epsilon_MM,epsilon_MS,epsilon_SS;
-  double sigma_MM,sigma_MS,sigma_SS;
+  double epsilon_MM,epsilon_SS;
+  double sigma_MM,sigma_SS;
 
   // read file on proc 0
 
@@ -1122,12 +1064,6 @@ void PairREBOMoS::read_file(char *filename)
     rcLJmax[0][1] = 2.5*sigma[0][1];
     rcLJmax[1][0] = rcLJmax[0][1];
     rcLJmax[1][1] = 2.5*sigma[1][1];
-
-    rcLJmaxsq[0][0] = rcLJmax[0][0]*rcLJmax[0][0];
-    rcLJmaxsq[1][0] = rcLJmax[1][0]*rcLJmax[1][0];
-    rcLJmaxsq[0][1] = rcLJmax[0][1]*rcLJmax[0][1];
-    rcLJmaxsq[1][1] = rcLJmax[1][1]*rcLJmax[1][1];
-
   }
 
   // broadcast read-in and setup values
@@ -1156,17 +1092,16 @@ void PairREBOMoS::read_file(char *filename)
   MPI_Bcast(&a2[0],2,MPI_DOUBLE,0,world);
   MPI_Bcast(&a3[0],2,MPI_DOUBLE,0,world);
 
-  MPI_Bcast(&bg0[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg1[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg2[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg3[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg4[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg5[0],1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&bg6[0],1,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg0[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg1[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg2[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg3[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg4[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg5[0],2,MPI_DOUBLE,0,world);
+  MPI_Bcast(&bg6[0],2,MPI_DOUBLE,0,world);
 
   MPI_Bcast(&rcLJmin[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&rcLJmax[0][0],4,MPI_DOUBLE,0,world);
-  MPI_Bcast(&rcLJmaxsq[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&epsilon[0][0],4,MPI_DOUBLE,0,world);
   MPI_Bcast(&sigma[0][0],4,MPI_DOUBLE,0,world);
 }

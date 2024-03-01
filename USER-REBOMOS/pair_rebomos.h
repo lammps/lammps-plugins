@@ -1,7 +1,7 @@
 /* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   LAMMPS Development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -22,6 +22,7 @@ PairStyle(rebomos,PairREBOMoS);
 
 #include "math_const.h"
 #include "pair.h"
+
 #include <cmath>
 
 namespace LAMMPS_NS {
@@ -38,9 +39,6 @@ class PairREBOMoS : public Pair {
   double memory_usage() override;
 
  protected:
-  double cutljrebosq;    // cut for when to compute
-                         // REBO neighs of ghost atoms
-
   double **lj1, **lj2, **lj3, **lj4;    // pre-computed LJ coeffs for M,S types
   double cut3rebo;                      // maximum distance for 3rd REBO neigh
 
@@ -51,7 +49,6 @@ class PairREBOMoS : public Pair {
   int *REBO_numneigh;       // # of pair neighbors for each atom
   int **REBO_firstneigh;    // ptr to 1st neighbor of each atom
 
-  double *closestdistsq;    // closest owned atom dist to each ghost
   double *nM, *nS;          // sum of weighting fns with REBO neighs
 
   double rcmin[2][2], rcmax[2][2], rcmaxsq[2][2], rcmaxp[2][2];
@@ -59,14 +56,14 @@ class PairREBOMoS : public Pair {
   double b0[2], b1[2], b2[2], b3[2], b4[2], b5[2], b6[2];
   double bg0[2], bg1[2], bg2[2], bg3[2], bg4[2], bg5[2], bg6[2];
   double a0[2], a1[2], a2[2], a3[2];
-  double rcLJmin[2][2], rcLJmax[2][2], rcLJmaxsq[2][2];
+  double rcLJmin[2][2], rcLJmax[2][2];
   double epsilon[2][2], sigma[2][2];
 
   void REBO_neigh();
-  void FREBO(int, int);
-  void FLJ(int, int);
+  void FREBO(int);
+  void FLJ(int);
 
-  double bondorder(int, int, double *, double, double, double **, int);
+  double bondorder(int, int, double *, double, double, double **);
 
   inline double gSpline(const double costh, const int typei, double &dgdc) const
   {

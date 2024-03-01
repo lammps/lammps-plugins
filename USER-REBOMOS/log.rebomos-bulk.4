@@ -1,7 +1,6 @@
-LAMMPS (23 Jun 2022)
-OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+LAMMPS (2 Aug 2023 - Maintenance - stable_2Aug2023_update2-42-ge446b17d41)
   using 1 OpenMP thread(s) per MPI task
-Loaded 3 plugins from ../build-develop
+Loaded 1 plugins from /home/akohlmey/compile/lammps-plugins/USER-REBOMOS/build
 units metal
 
 lattice custom 1.0 a1  3.1903157234 0.0000000000  0.0000000000                    a2 -1.5964590311 2.7651481541  0.0000000000                    a3  0.0000000000 0.0000000000 13.9827680588                 basis  0.0000000000 0.000000000   $(3.0/4.0)                   basis  0.0000000000 0.000000000   $(1.0/4.0)                   basis  $(2.0/3.0)   $(1.0/3.0)    0.862008989                  basis  $(1.0/3.0)   $(2.0/3.0)    0.137990996                  basis  $(1.0/3.0)   $(2.0/3.0)    0.362008989                  basis  $(2.0/3.0)   $(1.0/3.0)    0.637991011                  origin 0.1 0.1 0.1
@@ -31,7 +30,7 @@ mass                    2 32.065 #S
 
 pair_style rebomos
 pair_coeff * * MoS.REBO.set5b M S
-Reading rebomos potential file MoS.REBO.set5b with DATE: 2022-08-01
+Reading rebomos potential file MoS.REBO.set5b with DATE: 2013-11-04
 
 thermo_style custom step temp press pe ke cellgamma vol
 thermo 10
@@ -39,48 +38,48 @@ thermo 10
 fix 1 all nve
 run 20
 Neighbor list info ...
-  update every 1 steps, delay 10 steps, check yes
+  update: every = 1 steps, delay = 0 steps, check = yes
   max neighbors/atom: 2000, page size: 100000
-  master list distance cutoff = 20.1
-  ghost atom cutoff = 20.1
-  binsize = 10.05, bins = 3 3 2
+  master list distance cutoff = 13.4
+  ghost atom cutoff = 13.4
+  binsize = 6.7, bins = 5 4 3
   1 neighbor lists, perpetual/occasional/extra = 1 0 0
   (1) pair rebomos, perpetual
       attributes: full, newton on, ghost
       pair build: full/bin/ghost
       stencil: full/ghost/bin/3d
       bin: standard
-Per MPI rank memory allocation (min/avg/max) = 4.977 | 4.978 | 4.978 Mbytes
+Per MPI rank memory allocation (min/avg/max) = 4.15 | 4.151 | 4.151 Mbytes
    Step          Temp          Press          PotEng         KinEng       CellGamma        Volume    
          0   0              28799.53      -2061.6112      0              113.40187      5922.4926    
         10   80.776057      13540.088     -2064.6132      2.9966028      113.40187      5922.4926    
         20   146.17503     -20669.371     -2067.0428      5.4227518      113.40187      5922.4926    
-Loop time of 0.0488819 on 4 procs for 20 steps with 288 atoms
+Loop time of 0.0577809 on 4 procs for 20 steps with 288 atoms
 
-Performance: 35.351 ns/day, 0.679 hours/ns, 409.149 timesteps/s
-99.6% CPU use with 4 MPI tasks x 1 OpenMP threads
+Performance: 29.906 ns/day, 0.803 hours/ns, 346.135 timesteps/s, 99.687 katom-step/s
+99.3% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.043637   | 0.045346   | 0.047342   |   0.6 | 92.77
+Pair    | 0.051508   | 0.054289   | 0.056629   |   0.8 | 93.96
 Neigh   | 0          | 0          | 0          |   0.0 |  0.00
-Comm    | 0.0012878  | 0.0032958  | 0.0050166  |   2.3 |  6.74
-Output  | 3.9346e-05 | 4.6707e-05 | 6.3171e-05 |   0.0 |  0.10
-Modify  | 2.322e-05  | 2.7407e-05 | 3.0797e-05 |   0.0 |  0.06
-Other   |            | 0.0001662  |            |       |  0.34
+Comm    | 0.00094077 | 0.0032742  | 0.0060442  |   3.2 |  5.67
+Output  | 4.0772e-05 | 4.5659e-05 | 5.8486e-05 |   0.0 |  0.08
+Modify  | 2.7779e-05 | 3.1745e-05 | 3.5749e-05 |   0.0 |  0.05
+Other   |            | 0.0001403  |            |       |  0.24
 
 Nlocal:             72 ave          72 max          72 min
 Histogram: 4 0 0 0 0 0 0 0 0 0
-Nghost:         7113.5 ave        7114 max        7113 min
+Nghost:         2771.5 ave        2775 max        2768 min
 Histogram: 2 0 0 0 0 0 0 0 0 2
 Neighs:              0 ave           0 max           0 min
 Histogram: 4 0 0 0 0 0 0 0 0 0
-FullNghs:       119280 ave      119280 max      119280 min
+FullNghs:        35712 ave       35712 max       35712 min
 Histogram: 4 0 0 0 0 0 0 0 0 0
 
-Total # of neighbors = 477120
-Ave neighs/atom = 1656.6667
+Total # of neighbors = 142848
+Ave neighs/atom = 496
 Neighbor list builds = 0
 Dangerous builds = 0
 
