@@ -7,7 +7,10 @@ for a number of reasons, but ported to be compatible with the
 |--------------|-----------------------------------------------------------------------------|
 | USER-AEAM    | https://github.com/psaidi/AEAM                                              |
 | USER-BFIELD  | https://matsci.org/t/discrepency-beween-old-version-and-new-version/50014/5 |
-| USER-REBOMOS | https://matsci.org/t/pair-rebomos/30503                                     |
+
+As of the 17 April 2024 LAMMPS release the USER-REBOMOS package code
+has been merged with upstream and the corresponding pair style is now
+part of the MANYBODY package. The plugin package has thus been removed.
 
 As of the 22 December 2022 LAMMPS release, the USER-VCSGC package
 code has been merged with upstream and the corresponding fix is now
