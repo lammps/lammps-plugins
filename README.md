@@ -1,13 +1,18 @@
 This repository contains source code written for LAMMPS from
 various sources that is not part of the LAMMPS distribution
 for a number of reasons, but ported to be compatible with the
-2 August 2023 LAMMPS release and converted to create plugins.
+2 August 2023 LAMMPS release or later and converted to create plugins.
+Last check for compatibility was with the stable LAMMPS release
+version 22 July 2025.
 
 | Folders      | Origin of source code                                                       |
 |--------------|-----------------------------------------------------------------------------|
 | USER-AEAM    | https://github.com/psaidi/AEAM                                              |
 | USER-BFIELD  | https://matsci.org/t/discrepency-beween-old-version-and-new-version/50014/5 |
-| USER-REBOMOS | https://matsci.org/t/pair-rebomos/30503                                     |
+
+As of the 17 April 2024 LAMMPS release the USER-REBOMOS package code
+has been merged with upstream and the corresponding pair style is now
+part of the MANYBODY package. The plugin package has thus been removed.
 
 As of the 22 December 2022 LAMMPS release, the USER-VCSGC package
 code has been merged with upstream and the corresponding fix is now
