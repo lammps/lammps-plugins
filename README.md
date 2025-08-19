@@ -1,7 +1,9 @@
 This repository contains source code written for LAMMPS from
 various sources that is not part of the LAMMPS distribution
 for a number of reasons, but ported to be compatible with the
-2 August 2023 LAMMPS release and converted to create plugins.
+2 August 2023 LAMMPS release or later and converted to create plugins.
+Last check for compatibility was with the stable LAMMPS release
+version 22 July 2025.
 
 | Folders      | Origin of source code                                                       |
 |--------------|-----------------------------------------------------------------------------|
