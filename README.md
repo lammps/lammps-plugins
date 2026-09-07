@@ -1,3 +1,5 @@
+Due to lack of interest, work on this repository has stopped.
+
 This repository contains source code written for LAMMPS from
 various sources that is not part of the LAMMPS distribution
 for a number of reasons, but ported to be compatible with the
